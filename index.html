@@ -22,6 +22,12 @@
     <!-- CryptoJS for password hashing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 
+    <!-- Load Modular Features -->
+    <script src="schema-validator.js" type="text/babel"></script>
+    <script src="diff-tool.js" type="text/babel"></script>
+    <script src="storage-wizard.js" type="text/babel"></script>
+    <script src="network-wizard.js" type="text/babel"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -657,14 +663,23 @@
             </div>
         );
 
-        const NetworkTab = ({ config, updateConfig }) => (
+        const NetworkTab = ({ config, updateConfig, onShowNetworkWizard }) => (
             <div role="tabpanel" id="network-panel" aria-labelledby="network-tab" className="fade-in">
-                <h2 className="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
-                    Network Configuration
-                </h2>
+                <div className="flex justify-between items-center mb-6 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
+                    <h2 className="text-2xl font-semibold text-ubuntu-orange">
+                        Network Configuration
+                    </h2>
+                    <button
+                        onClick={onShowNetworkWizard}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
+                        title="Open Network Configuration Wizard"
+                    >
+                        🧙 Network Wizard
+                    </button>
+                </div>
 
                 <InfoBox>
-                    Network configuration uses Netplan format. Leave empty for DHCP on all interfaces.
+                    Network configuration uses Netplan format. Leave empty for DHCP on all interfaces. Use the Network Wizard for a guided setup.
                 </InfoBox>
 
                 <FormTextarea
@@ -690,14 +705,23 @@
             </div>
         );
 
-        const StorageTab = ({ config, updateConfig }) => (
+        const StorageTab = ({ config, updateConfig, onShowStorageWizard }) => (
             <div role="tabpanel" id="storage-panel" aria-labelledby="storage-tab" className="fade-in">
-                <h2 className="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
-                    Storage Configuration
-                </h2>
+                <div className="flex justify-between items-center mb-6 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
+                    <h2 className="text-2xl font-semibold text-ubuntu-orange">
+                        Storage Configuration
+                    </h2>
+                    <button
+                        onClick={onShowStorageWizard}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
+                        title="Open Storage Configuration Wizard"
+                    >
+                        🧙 Storage Wizard
+                    </button>
+                </div>
 
                 <InfoBox>
-                    Storage configuration defines disk partitioning. Leave empty for default guided partitioning.
+                    Storage configuration defines disk partitioning. Leave empty for default guided partitioning. Use the Storage Wizard for a guided setup.
                 </InfoBox>
 
                 <FormTextarea
@@ -891,6 +915,11 @@
             });
             const [showPasswordHash, setShowPasswordHash] = useState(false);
             const [showTemplates, setShowTemplates] = useState(false);
+            const [showValidation, setShowValidation] = useState(false);
+            const [validationResults, setValidationResults] = useState(null);
+            const [showDiff, setShowDiff] = useState(false);
+            const [showStorageWizard, setShowStorageWizard] = useState(false);
+            const [showNetworkWizard, setShowNetworkWizard] = useState(false);
             const fileInputRef = useRef(null);
 
             const [config, setConfig] = useState({
@@ -956,6 +985,37 @@
             const applyTemplate = (templateConfig) => {
                 setConfig(prev => ({ ...prev, ...templateConfig }));
                 announce('Template applied successfully');
+            };
+
+            const handleValidate = () => {
+                const yamlContent = generateYAML();
+                try {
+                    const autoinstallConfig = jsyaml.load(yamlContent);
+                    const results = window.SchemaValidator.validate(autoinstallConfig.autoinstall || autoinstallConfig);
+                    setValidationResults(results);
+                    setShowValidation(true);
+                    announce('Configuration validated');
+                } catch (e) {
+                    setValidationResults({
+                        valid: false,
+                        errors: [`YAML parsing error: ${e.message}`],
+                        warnings: [],
+                        summary: { errors: 1, warnings: 0 }
+                    });
+                    setShowValidation(true);
+                }
+            };
+
+            const handleStorageWizardApply = (storageConfig) => {
+                const yamlString = jsyaml.dump(storageConfig, { indent: 2 });
+                updateConfig('storageConfig', yamlString);
+                announce('Storage configuration applied from wizard');
+            };
+
+            const handleNetworkWizardApply = (networkConfig) => {
+                const yamlString = jsyaml.dump(networkConfig, { indent: 2 });
+                updateConfig('networkConfig', yamlString);
+                announce('Network configuration applied from wizard');
             };
 
             const generateYAML = useCallback(() => {
@@ -1333,6 +1393,20 @@
                                 >
                                     📋 Load Template
                                 </button>
+                                <button
+                                    onClick={handleValidate}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                                    title="Validate configuration against schema"
+                                >
+                                    ✅ Validate Config
+                                </button>
+                                <button
+                                    onClick={() => setShowDiff(true)}
+                                    className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                                    title="Compare two configurations"
+                                >
+                                    📊 Compare Configs
+                                </button>
                             </div>
 
                             {/* Main Content */}
@@ -1375,6 +1449,8 @@
                                             updateConfig={updateConfig}
                                             darkMode={darkMode}
                                             onShowPasswordHash={() => setShowPasswordHash(true)}
+                                            onShowStorageWizard={() => setShowStorageWizard(true)}
+                                            onShowNetworkWizard={() => setShowNetworkWizard(true)}
                                         />
                                     </section>
 
@@ -1475,6 +1551,33 @@
                             onClose={() => setShowTemplates(false)}
                             onSelectTemplate={applyTemplate}
                         />
+                        {window.ValidationModal && (
+                            <window.ValidationModal
+                                isOpen={showValidation}
+                                onClose={() => setShowValidation(false)}
+                                results={validationResults}
+                            />
+                        )}
+                        {window.DiffModal && (
+                            <window.DiffModal
+                                isOpen={showDiff}
+                                onClose={() => setShowDiff(false)}
+                            />
+                        )}
+                        {window.StorageWizard && (
+                            <window.StorageWizard
+                                isOpen={showStorageWizard}
+                                onClose={() => setShowStorageWizard(false)}
+                                onApply={handleStorageWizardApply}
+                            />
+                        )}
+                        {window.NetworkWizard && (
+                            <window.NetworkWizard
+                                isOpen={showNetworkWizard}
+                                onClose={() => setShowNetworkWizard(false)}
+                                onApply={handleNetworkWizardApply}
+                            />
+                        )}
                     </div>
                 </div>
             );
