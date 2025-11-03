@@ -23,10 +23,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 
     <!-- Load Modular Features -->
+    <script src="i18n.js"></script>
     <script src="schema-validator.js" type="text/babel"></script>
     <script src="diff-tool.js" type="text/babel"></script>
     <script src="storage-wizard.js" type="text/babel"></script>
     <script src="network-wizard.js" type="text/babel"></script>
+    <script src="cloud-init-exporter.js" type="text/babel"></script>
+    <script src="config-simulator.js" type="text/babel"></script>
+    <script src="system-importer.js" type="text/babel"></script>
 
     <script>
         tailwind.config = {
@@ -920,6 +924,10 @@
             const [showDiff, setShowDiff] = useState(false);
             const [showStorageWizard, setShowStorageWizard] = useState(false);
             const [showNetworkWizard, setShowNetworkWizard] = useState(false);
+            const [showCloudInitExport, setShowCloudInitExport] = useState(false);
+            const [showConfigSimulator, setShowConfigSimulator] = useState(false);
+            const [showSystemImporter, setShowSystemImporter] = useState(false);
+            const [language, setLanguage] = useState(() => window.i18n.getCurrentLanguage());
             const fileInputRef = useRef(null);
 
             const [config, setConfig] = useState({
@@ -1016,6 +1024,20 @@
                 const yamlString = jsyaml.dump(networkConfig, { indent: 2 });
                 updateConfig('networkConfig', yamlString);
                 announce('Network configuration applied from wizard');
+            };
+
+            const handleSystemImporterApply = (importedConfig) => {
+                // Merge imported config with current config
+                setConfig(prev => ({ ...prev, ...importedConfig }));
+                announce('Configuration imported from system');
+            };
+
+            const handleLanguageChange = (lang) => {
+                window.i18n.setLanguage(lang);
+                setLanguage(lang);
+                announce(`Language changed to ${lang}`);
+                // Force re-render
+                window.location.reload();
             };
 
             const generateYAML = useCallback(() => {
@@ -1369,19 +1391,33 @@
                         <div className="max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
                             {/* Header */}
                             <header className="bg-gradient-to-r from-ubuntu-orange to-ubuntu-purple text-white py-8 px-6 md:px-10 relative" role="banner">
-                                <button
-                                    onClick={() => setDarkMode(!darkMode)}
-                                    className="absolute top-4 right-4 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
-                                    aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-                                    title={darkMode ? 'Light mode' : 'Dark mode'}
-                                >
-                                    {darkMode ? '☀️' : '🌙'}
-                                </button>
-                                <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center">
-                                    Ubuntu Autoinstall Configuration Builder
+                                <div className="absolute top-4 right-4 flex gap-2">
+                                    <select
+                                        value={language}
+                                        onChange={(e) => handleLanguageChange(e.target.value)}
+                                        className="px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white font-semibold cursor-pointer border-none"
+                                        aria-label="Select language"
+                                    >
+                                        {window.i18n.getAvailableLanguages().map(lang => (
+                                            <option key={lang.code} value={lang.code} className="bg-gray-800">
+                                                {lang.flag} {lang.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={() => setDarkMode(!darkMode)}
+                                        className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                                        aria-label={darkMode ? window.i18n.t('lightMode') : window.i18n.t('darkMode')}
+                                        title={darkMode ? window.i18n.t('lightMode') : window.i18n.t('darkMode')}
+                                    >
+                                        {darkMode ? '☀️' : '🌙'}
+                                    </button>
+                                </div>
+                                <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center pr-32">
+                                    {window.i18n.t('appTitle')}
                                 </h1>
-                                <p className="text-lg md:text-xl text-center opacity-90">
-                                    Create and customize your Ubuntu autoinstall.yaml configuration
+                                <p className="text-lg md:text-xl text-center opacity-90 pr-32">
+                                    {window.i18n.t('appSubtitle')}
                                 </p>
                             </header>
 
@@ -1389,23 +1425,44 @@
                             <div className="bg-gray-100 dark:bg-gray-700 p-4 flex flex-wrap gap-2 justify-center border-b border-gray-200 dark:border-gray-600">
                                 <button
                                     onClick={() => setShowTemplates(true)}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                                    className="px-3 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
                                 >
-                                    📋 Load Template
+                                    📋 {window.i18n.t('loadTemplate')}
                                 </button>
                                 <button
                                     onClick={handleValidate}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
-                                    title="Validate configuration against schema"
+                                    className="px-3 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm"
+                                    title={window.i18n.t('validateConfig')}
                                 >
-                                    ✅ Validate Config
+                                    ✅ {window.i18n.t('validateConfig')}
                                 </button>
                                 <button
                                     onClick={() => setShowDiff(true)}
-                                    className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
-                                    title="Compare two configurations"
+                                    className="px-3 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors text-sm"
+                                    title={window.i18n.t('compareConfigs')}
                                 >
-                                    📊 Compare Configs
+                                    📊 {window.i18n.t('compareConfigs')}
+                                </button>
+                                <button
+                                    onClick={() => setShowConfigSimulator(true)}
+                                    className="px-3 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors text-sm"
+                                    title={window.i18n.t('previewSystem')}
+                                >
+                                    🔍 {window.i18n.t('previewSystem')}
+                                </button>
+                                <button
+                                    onClick={() => setShowCloudInitExport(true)}
+                                    className="px-3 py-2 bg-cyan-600 text-white rounded-lg font-semibold hover:bg-cyan-700 transition-colors text-sm"
+                                    title={window.i18n.t('exportCloudInit')}
+                                >
+                                    ☁️ {window.i18n.t('exportCloudInit')}
+                                </button>
+                                <button
+                                    onClick={() => setShowSystemImporter(true)}
+                                    className="px-3 py-2 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors text-sm"
+                                    title={window.i18n.t('importSystem')}
+                                >
+                                    📥 {window.i18n.t('importSystem')}
                                 </button>
                             </div>
 
@@ -1576,6 +1633,27 @@
                                 isOpen={showNetworkWizard}
                                 onClose={() => setShowNetworkWizard(false)}
                                 onApply={handleNetworkWizardApply}
+                            />
+                        )}
+                        {window.CloudInitExportModal && (
+                            <window.CloudInitExportModal
+                                isOpen={showCloudInitExport}
+                                onClose={() => setShowCloudInitExport(false)}
+                                autoinstallYaml={yaml}
+                            />
+                        )}
+                        {window.ConfigSimulatorModal && (
+                            <window.ConfigSimulatorModal
+                                isOpen={showConfigSimulator}
+                                onClose={() => setShowConfigSimulator(false)}
+                                autoinstallYaml={yaml}
+                            />
+                        )}
+                        {window.SystemImporterWizard && (
+                            <window.SystemImporterWizard
+                                isOpen={showSystemImporter}
+                                onClose={() => setShowSystemImporter(false)}
+                                onApply={handleSystemImporterApply}
                             />
                         )}
                     </div>
