@@ -6,13 +6,15 @@ A web-based GUI for creating and managing Ubuntu autoinstall configurations. Thi
 
 ## Features
 
+- **Modern React Architecture**: Built with React 18 and Hooks for optimal performance
+- **Component-Based Design**: Reusable, maintainable components with clean separation of concerns
 - **User-Friendly Interface**: Organized tabs for different configuration sections, built with Tailwind CSS
 - **Complete Coverage**: Supports all major autoinstall schema fields
-- **YAML Generation**: Real-time YAML preview as you configure
+- **Real-Time YAML Generation**: Automatic YAML preview as you configure
 - **Save & Load**: Import existing autoinstall.yaml files or export new ones
 - **Bookmark Support**: Save your configuration in the URL for easy sharing and bookmarking
-- **No Installation Required**: Pure HTML/CSS/JavaScript - runs in any modern browser
-- **GitHub Pages Ready**: Host directly on GitHub Pages
+- **No Build Process Required**: Uses React via CDN - runs directly in any modern browser
+- **GitHub Pages Ready**: Single HTML file, perfect for static hosting
 - **Fully Accessible**: WCAG 2.1 compliant with comprehensive accessibility features
 
 ## Accessibility Features
@@ -159,11 +161,31 @@ Tested on:
 
 ### Dependencies
 
+All dependencies are loaded from CDN (no build process or npm install required):
+
+- **React 18**: Modern UI library for building component-based interfaces
+  - Loaded from CDN: `https://unpkg.com/react@18/umd/react.production.min.js`
+  - Provides efficient state management and component lifecycle
+- **React DOM 18**: React renderer for web applications
+  - Loaded from CDN: `https://unpkg.com/react-dom@18/umd/react-dom.production.min.js`
+- **Babel Standalone**: In-browser JSX transformation
+  - Loaded from CDN: `https://unpkg.com/@babel/standalone/babel.min.js`
+  - Allows writing JSX directly in the HTML file
 - **Tailwind CSS**: Utility-first CSS framework for styling
   - Loaded from CDN: `https://cdn.tailwindcss.com`
   - Provides responsive, accessible, and modern design
 - **js-yaml (4.1.0)**: YAML parsing and generation
   - Loaded from CDN: `https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js`
+
+### React Architecture
+
+The application uses modern React patterns:
+- **Hooks**: useState, useEffect, useCallback, useRef for state and lifecycle management
+- **Component Composition**: Reusable FormInput, FormTextarea, FormSelect, and FormCheckbox components
+- **Functional Components**: All components are functional with hooks
+- **Props**: Clean data flow from parent to child components
+- **Auto-Generation**: useEffect hook automatically generates YAML when config changes
+- **URL Persistence**: useEffect manages URL hash synchronization for bookmarking
 
 ### File Structure
 
