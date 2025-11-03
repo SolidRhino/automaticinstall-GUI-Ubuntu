@@ -6,6 +6,7 @@ A web-based GUI for creating and managing Ubuntu autoinstall configurations. Thi
 
 ## Features
 
+### Core Functionality
 - **Modern React Architecture**: Built with React 18 and Hooks for optimal performance
 - **Component-Based Design**: Reusable, maintainable components with clean separation of concerns
 - **User-Friendly Interface**: Organized tabs for different configuration sections, built with Tailwind CSS
@@ -13,6 +14,14 @@ A web-based GUI for creating and managing Ubuntu autoinstall configurations. Thi
 - **Real-Time YAML Generation**: Automatic YAML preview as you configure
 - **Save & Load**: Import existing autoinstall.yaml files or export new ones
 - **Bookmark Support**: Save your configuration in the URL for easy sharing and bookmarking
+
+### Advanced Features
+- **✅ Form Validation**: Real-time validation for hostnames, usernames, URLs, SSH keys, YAML syntax, and Ubuntu Pro tokens
+- **🔒 Password Hashing**: Built-in SHA-512 password hash generator for secure password storage
+- **📋 Configuration Templates**: 6 pre-configured templates for common server setups (Web Server, Database, Docker, Kubernetes, Development, Minimal)
+- **🌙 Dark Mode**: Toggle between light and dark themes with preference persistence
+
+### Technical
 - **No Build Process Required**: Uses React via CDN - runs directly in any modern browser
 - **GitHub Pages Ready**: Single HTML file, perfect for static hosting
 - **Fully Accessible**: WCAG 2.1 compliant with comprehensive accessibility features
@@ -138,6 +147,48 @@ Visit the hosted version: [Your GitHub Pages URL]
 3. Bookmark the page - your configuration is saved in the URL
 4. Share the URL or return to it later to restore the configuration
 
+### Using Templates
+
+1. Click **"📋 Load Template"** in the toolbar
+2. Choose from 6 pre-configured templates:
+   - **Web Server**: LAMP/LEMP stack with nginx, PHP, MySQL, certbot, and firewall
+   - **Database Server**: PostgreSQL with backup tools
+   - **Docker Host**: Docker and Docker Compose setup
+   - **Kubernetes Node**: K8s node with kubectl and containerd
+   - **Development Workstation**: Dev tools, editors (VS Code, vim, emacs), build tools
+   - **Minimal Server**: Bare minimum with SSH only
+3. Template will populate relevant fields automatically
+4. Customize as needed for your specific requirements
+
+### Password Hashing
+
+1. Go to the **Identity** tab
+2. Click the **"🔒 Hash"** button next to the password field
+3. Enter your plain text password in the modal
+4. Click **"Generate SHA-512 Hash"**
+5. Click **"Use This Hash"** to insert it into the configuration
+6. The hash is Linux-compatible and much more secure than plain text
+
+**Important**: Always use hashed passwords in production! Plain text passwords in configuration files are a security risk.
+
+### Form Validation
+
+The application automatically validates:
+- **Hostnames**: RFC-compliant hostname format
+- **Usernames**: Linux username requirements (lowercase, starts with letter/underscore)
+- **URLs**: Valid URL format for proxy settings
+- **SSH Keys**: Validates SSH public key format (rsa, ed25519, ecdsa)
+- **YAML**: Syntax validation for network and storage configurations
+- **Ubuntu Pro Tokens**: Base58 format starting with 'C'
+
+Invalid fields will show red borders and error messages below the field.
+
+### Dark Mode
+
+- Click the **☀️/🌙** button in the top-right corner
+- Your preference is saved to localStorage
+- Dark mode applies to all UI elements including modals and validation messages
+
 ## Autoinstall Schema Reference
 
 This tool is based on the official Ubuntu autoinstall schema:
@@ -173,9 +224,12 @@ All dependencies are loaded from CDN (no build process or npm install required):
   - Allows writing JSX directly in the HTML file
 - **Tailwind CSS**: Utility-first CSS framework for styling
   - Loaded from CDN: `https://cdn.tailwindcss.com`
-  - Provides responsive, accessible, and modern design
+  - Configured with dark mode support
 - **js-yaml (4.1.0)**: YAML parsing and generation
   - Loaded from CDN: `https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js`
+- **CryptoJS (4.2.0)**: Cryptographic library for password hashing
+  - Loaded from CDN: `https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js`
+  - Used for SHA-512 password hash generation
 
 ### React Architecture
 
