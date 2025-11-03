@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubuntu Autoinstall Configuration Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Ubuntu', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #E95420 0%, #772953 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .form-section {
+            padding: 30px;
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .preview-section {
+            padding: 30px;
+            background: #f8f9fa;
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 0.95em;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            color: #E95420;
+        }
+
+        .tab.active {
+            color: #E95420;
+            border-bottom-color: #E95420;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .form-group .help-text {
+            display: block;
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group input[type="number"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #E95420;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #E95420;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c94315;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(233, 84, 32, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .yaml-preview {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .action-buttons {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 2px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .section-header {
+            font-size: 1.3em;
+            color: #E95420;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .array-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #E95420;
+        }
+
+        .array-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+            padding: 5px 12px;
+            font-size: 0.85em;
+        }
+
+        .btn-remove:hover {
+            background: #c82333;
+        }
+
+        .btn-add {
+            background: #007bff;
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .btn-add:hover {
+            background: #0056b3;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .form-section {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #0c5460;
+        }
+
+        .network-config-item, .storage-config-item {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ubuntu Autoinstall Configuration Builder</h1>
+            <p>Create and customize your Ubuntu autoinstall.yaml configuration</p>
+        </header>
+
+        <div class="main-content">
+            <div class="form-section">
+                <div class="tabs">
+                    <button class="tab active" data-tab="basic">Basic</button>
+                    <button class="tab" data-tab="identity">Identity</button>
+                    <button class="tab" data-tab="network">Network</button>
+                    <button class="tab" data-tab="storage">Storage</button>
+                    <button class="tab" data-tab="software">Software</button>
+                    <button class="tab" data-tab="ssh">SSH</button>
+                    <button class="tab" data-tab="advanced">Advanced</button>
+                </div>
+
+                <!-- Basic Tab -->
+                <div class="tab-content active" id="basic">
+                    <h2 class="section-header">Basic Configuration</h2>
+
+                    <div class="form-group">
+                        <label>Version (required)</label>
+                        <input type="number" id="version" value="1" required>
+                        <span class="help-text">Autoinstall schema version (must be 1)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Locale</label>
+                        <input type="text" id="locale" placeholder="en_US.UTF-8">
+                        <span class="help-text">System language and region</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Timezone</label>
+                        <input type="text" id="timezone" placeholder="America/New_York">
+                        <span class="help-text">System timezone (e.g., America/New_York, Europe/London)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Keyboard Layout</label>
+                        <input type="text" id="keyboard-layout" placeholder="us">
+                        <span class="help-text">Keyboard layout (e.g., us, uk, de)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Keyboard Variant</label>
+                        <input type="text" id="keyboard-variant" placeholder="">
+                        <span class="help-text">Optional keyboard variant</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Updates</label>
+                        <select id="updates">
+                            <option value="">No automatic updates</option>
+                            <option value="security">Security updates only</option>
+                            <option value="all">All updates</option>
+                        </select>
+                        <span class="help-text">Update policy during installation</span>
+                    </div>
+                </div>
+
+                <!-- Identity Tab -->
+                <div class="tab-content" id="identity">
+                    <h2 class="section-header">User Identity</h2>
+
+                    <div class="form-group">
+                        <label>Hostname</label>
+                        <input type="text" id="identity-hostname" placeholder="ubuntu-server">
+                        <span class="help-text">System hostname</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="identity-username" placeholder="ubuntu">
+                        <span class="help-text">Primary user account name</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="identity-password" placeholder="password">
+                        <span class="help-text">User password (will be hashed in output)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Real Name</label>
+                        <input type="text" id="identity-realname" placeholder="Ubuntu User">
+                        <span class="help-text">User's full name</span>
+                    </div>
+                </div>
+
+                <!-- Network Tab -->
+                <div class="tab-content" id="network">
+                    <h2 class="section-header">Network Configuration</h2>
+
+                    <div class="info-box">
+                        Network configuration uses Netplan format. Leave empty for DHCP on all interfaces.
+                    </div>
+
+                    <div class="form-group">
+                        <label>Network Configuration (YAML)</label>
+                        <textarea id="network-config" rows="10" placeholder="version: 2&#10;ethernets:&#10;  eth0:&#10;    dhcp4: true"></textarea>
+                        <span class="help-text">Netplan v2 configuration in YAML format</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Proxy</label>
+                        <input type="text" id="proxy" placeholder="http://proxy.example.com:3128">
+                        <span class="help-text">HTTP proxy URI (optional)</span>
+                    </div>
+                </div>
+
+                <!-- Storage Tab -->
+                <div class="tab-content" id="storage">
+                    <h2 class="section-header">Storage Configuration</h2>
+
+                    <div class="info-box">
+                        Storage configuration defines disk partitioning. Leave empty for default guided partitioning.
+                    </div>
+
+                    <div class="form-group">
+                        <label>Storage Configuration (YAML)</label>
+                        <textarea id="storage-config" rows="15" placeholder='layout:&#10;  name: lvm'></textarea>
+                        <span class="help-text">Storage layout configuration in YAML format</span>
+                    </div>
+                </div>
+
+                <!-- Software Tab -->
+                <div class="tab-content" id="software">
+                    <h2 class="section-header">Software Installation</h2>
+
+                    <div class="form-group">
+                        <label>Packages</label>
+                        <textarea id="packages" rows="6" placeholder="curl&#10;wget&#10;git&#10;vim"></textarea>
+                        <span class="help-text">Package names (one per line)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Snaps</label>
+                        <textarea id="snaps" rows="6" placeholder="name: lxd&#10;channel: latest/stable&#10;---&#10;name: docker&#10;classic: true"></textarea>
+                        <span class="help-text">Snap packages (YAML format, use --- to separate)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kernel</label>
+                        <input type="text" id="kernel" placeholder="">
+                        <span class="help-text">Kernel package or flavor (optional)</span>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="drivers">
+                        <label for="drivers">Install proprietary drivers</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="codecs">
+                        <label for="codecs">Install restricted codecs</label>
+                    </div>
+                </div>
+
+                <!-- SSH Tab -->
+                <div class="tab-content" id="ssh">
+                    <h2 class="section-header">SSH Configuration</h2>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="ssh-install-server" checked>
+                        <label for="ssh-install-server">Install OpenSSH server</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="ssh-allow-pw" checked>
+                        <label for="ssh-allow-pw">Allow password authentication</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Authorized Keys</label>
+                        <textarea id="ssh-authorized-keys" rows="4" placeholder="ssh-rsa AAAAB3..."></textarea>
+                        <span class="help-text">SSH public keys (one per line)</span>
+                    </div>
+                </div>
+
+                <!-- Advanced Tab -->
+                <div class="tab-content" id="advanced">
+                    <h2 class="section-header">Advanced Options</h2>
+
+                    <div class="form-group">
+                        <label>Early Commands</label>
+                        <textarea id="early-commands" rows="4" placeholder="echo 'Early command 1'&#10;echo 'Early command 2'"></textarea>
+                        <span class="help-text">Commands to run before installation (one per line)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Late Commands</label>
+                        <textarea id="late-commands" rows="4" placeholder="echo 'Late command 1'&#10;curtin in-target -- apt update"></textarea>
+                        <span class="help-text">Commands to run after installation (one per line)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Error Commands</label>
+                        <textarea id="error-commands" rows="4" placeholder=""></textarea>
+                        <span class="help-text">Commands to run on installation error (one per line)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>User Data (cloud-init)</label>
+                        <textarea id="user-data" rows="6" placeholder="#cloud-config&#10;runcmd:&#10;  - echo 'Hello World'"></textarea>
+                        <span class="help-text">Cloud-init user-data configuration</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Shutdown Action</label>
+                        <select id="shutdown">
+                            <option value="">Default (reboot)</option>
+                            <option value="reboot">Reboot</option>
+                            <option value="poweroff">Power off</option>
+                        </select>
+                        <span class="help-text">Action to take after installation</span>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="kernel-crash-dumps">
+                        <label for="kernel-crash-dumps">Enable kernel crash dumps</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ubuntu Pro Token</label>
+                        <input type="text" id="ubuntu-pro-token" placeholder="C...">
+                        <span class="help-text">Ubuntu Pro subscription token (optional)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <h2 class="section-header">YAML Preview</h2>
+                <div class="yaml-preview" id="yaml-preview"># Configure options and click "Generate YAML" to see preview</div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-primary" onclick="generateYAML()">Generate YAML</button>
+            <button class="btn-success" onclick="downloadYAML()">Download autoinstall.yaml</button>
+            <button class="btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
+            <div class="file-input-wrapper">
+                <button class="btn-secondary">Load YAML File</button>
+                <input type="file" id="file-input" accept=".yaml,.yml" onchange="loadYAMLFile(event)">
+            </div>
+            <button class="btn-secondary" onclick="saveToURL()">Save to Bookmark</button>
+            <button class="btn-secondary" onclick="clearForm()">Clear Form</button>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Generate YAML configuration
+        function generateYAML() {
+            const config = {
+                autoinstall: {}
+            };
+
+            // Version (required)
+            const version = parseInt(document.getElementById('version').value);
+            if (version) {
+                config.autoinstall.version = version;
+            }
+
+            // Basic configuration
+            const locale = document.getElementById('locale').value.trim();
+            if (locale) config.autoinstall.locale = locale;
+
+            const timezone = document.getElementById('timezone').value.trim();
+            if (timezone) config.autoinstall.timezone = timezone;
+
+            const updates = document.getElementById('updates').value;
+            if (updates) config.autoinstall.updates = updates;
+
+            // Keyboard
+            const keyboardLayout = document.getElementById('keyboard-layout').value.trim();
+            const keyboardVariant = document.getElementById('keyboard-variant').value.trim();
+            if (keyboardLayout) {
+                config.autoinstall.keyboard = {
+                    layout: keyboardLayout
+                };
+                if (keyboardVariant) {
+                    config.autoinstall.keyboard.variant = keyboardVariant;
+                }
+            }
+
+            // Identity
+            const hostname = document.getElementById('identity-hostname').value.trim();
+            const username = document.getElementById('identity-username').value.trim();
+            const password = document.getElementById('identity-password').value.trim();
+            const realname = document.getElementById('identity-realname').value.trim();
+
+            if (hostname || username || password) {
+                config.autoinstall.identity = {};
+                if (hostname) config.autoinstall.identity.hostname = hostname;
+                if (username) config.autoinstall.identity.username = username;
+                if (password) config.autoinstall.identity.password = password;
+                if (realname) config.autoinstall.identity.realname = realname;
+            }
+
+            // Network
+            const networkConfig = document.getElementById('network-config').value.trim();
+            if (networkConfig) {
+                try {
+                    config.autoinstall.network = jsyaml.load(networkConfig);
+                } catch (e) {
+                    console.error('Invalid network YAML:', e);
+                }
+            }
+
+            // Proxy
+            const proxy = document.getElementById('proxy').value.trim();
+            if (proxy) config.autoinstall.proxy = proxy;
+
+            // Storage
+            const storageConfig = document.getElementById('storage-config').value.trim();
+            if (storageConfig) {
+                try {
+                    config.autoinstall.storage = jsyaml.load(storageConfig);
+                } catch (e) {
+                    console.error('Invalid storage YAML:', e);
+                }
+            }
+
+            // Packages
+            const packages = document.getElementById('packages').value.trim();
+            if (packages) {
+                config.autoinstall.packages = packages.split('\n').filter(p => p.trim());
+            }
+
+            // Snaps
+            const snapsText = document.getElementById('snaps').value.trim();
+            if (snapsText) {
+                const snapBlocks = snapsText.split('---').map(s => s.trim()).filter(s => s);
+                config.autoinstall.snaps = snapBlocks.map(block => {
+                    try {
+                        return jsyaml.load(block);
+                    } catch (e) {
+                        const lines = block.split('\n');
+                        const snapObj = {};
+                        lines.forEach(line => {
+                            const match = line.match(/(\w+):\s*(.+)/);
+                            if (match) {
+                                const key = match[1];
+                                let value = match[2].trim();
+                                if (value === 'true') value = true;
+                                if (value === 'false') value = false;
+                                snapObj[key] = value;
+                            }
+                        });
+                        return snapObj;
+                    }
+                });
+            }
+
+            // Kernel
+            const kernel = document.getElementById('kernel').value.trim();
+            if (kernel) config.autoinstall.kernel = { package: kernel };
+
+            // Drivers and codecs
+            const drivers = document.getElementById('drivers').checked;
+            if (drivers) config.autoinstall.drivers = { install: true };
+
+            const codecs = document.getElementById('codecs').checked;
+            if (codecs) config.autoinstall.codecs = { install: true };
+
+            // SSH
+            const sshInstallServer = document.getElementById('ssh-install-server').checked;
+            const sshAllowPw = document.getElementById('ssh-allow-pw').checked;
+            const sshAuthorizedKeys = document.getElementById('ssh-authorized-keys').value.trim();
+
+            if (sshInstallServer || sshAuthorizedKeys) {
+                config.autoinstall.ssh = {
+                    'install-server': sshInstallServer,
+                    'allow-pw': sshAllowPw
+                };
+                if (sshAuthorizedKeys) {
+                    config.autoinstall.ssh['authorized-keys'] = sshAuthorizedKeys.split('\n').filter(k => k.trim());
+                }
+            }
+
+            // Advanced - Commands
+            const earlyCommands = document.getElementById('early-commands').value.trim();
+            if (earlyCommands) {
+                config.autoinstall['early-commands'] = earlyCommands.split('\n').filter(c => c.trim());
+            }
+
+            const lateCommands = document.getElementById('late-commands').value.trim();
+            if (lateCommands) {
+                config.autoinstall['late-commands'] = lateCommands.split('\n').filter(c => c.trim());
+            }
+
+            const errorCommands = document.getElementById('error-commands').value.trim();
+            if (errorCommands) {
+                config.autoinstall['error-commands'] = errorCommands.split('\n').filter(c => c.trim());
+            }
+
+            // User data
+            const userData = document.getElementById('user-data').value.trim();
+            if (userData) {
+                config.autoinstall['user-data'] = userData;
+            }
+
+            // Shutdown
+            const shutdown = document.getElementById('shutdown').value;
+            if (shutdown) config.autoinstall.shutdown = shutdown;
+
+            // Kernel crash dumps
+            const kernelCrashDumps = document.getElementById('kernel-crash-dumps').checked;
+            if (kernelCrashDumps) {
+                config.autoinstall['kernel-crash-dumps'] = { enabled: true };
+            }
+
+            // Ubuntu Pro
+            const ubuntuProToken = document.getElementById('ubuntu-pro-token').value.trim();
+            if (ubuntuProToken) {
+                config.autoinstall['ubuntu-pro'] = { token: ubuntuProToken };
+            }
+
+            // Generate YAML
+            const yaml = jsyaml.dump(config, {
+                indent: 2,
+                lineWidth: -1,
+                noRefs: true
+            });
+
+            document.getElementById('yaml-preview').textContent = yaml;
+            return yaml;
+        }
+
+        // Download YAML file
+        function downloadYAML() {
+            const yaml = generateYAML();
+            const blob = new Blob([yaml], { type: 'text/yaml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'autoinstall.yaml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Copy to clipboard
+        function copyToClipboard() {
+            const yaml = generateYAML();
+            navigator.clipboard.writeText(yaml).then(() => {
+                alert('YAML copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+
+        // Load YAML file
+        function loadYAMLFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    const data = jsyaml.load(content);
+                    populateFormFromData(data);
+                    generateYAML();
+                    alert('YAML file loaded successfully!');
+                } catch (err) {
+                    console.error('Error loading YAML:', err);
+                    alert('Error loading YAML file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Populate form from data
+        function populateFormFromData(data) {
+            const autoinstall = data.autoinstall || data;
+
+            // Basic
+            if (autoinstall.version !== undefined) {
+                document.getElementById('version').value = autoinstall.version;
+            }
+            if (autoinstall.locale) {
+                document.getElementById('locale').value = autoinstall.locale;
+            }
+            if (autoinstall.timezone) {
+                document.getElementById('timezone').value = autoinstall.timezone;
+            }
+            if (autoinstall.updates) {
+                document.getElementById('updates').value = autoinstall.updates;
+            }
+
+            // Keyboard
+            if (autoinstall.keyboard) {
+                if (autoinstall.keyboard.layout) {
+                    document.getElementById('keyboard-layout').value = autoinstall.keyboard.layout;
+                }
+                if (autoinstall.keyboard.variant) {
+                    document.getElementById('keyboard-variant').value = autoinstall.keyboard.variant;
+                }
+            }
+
+            // Identity
+            if (autoinstall.identity) {
+                if (autoinstall.identity.hostname) {
+                    document.getElementById('identity-hostname').value = autoinstall.identity.hostname;
+                }
+                if (autoinstall.identity.username) {
+                    document.getElementById('identity-username').value = autoinstall.identity.username;
+                }
+                if (autoinstall.identity.password) {
+                    document.getElementById('identity-password').value = autoinstall.identity.password;
+                }
+                if (autoinstall.identity.realname) {
+                    document.getElementById('identity-realname').value = autoinstall.identity.realname;
+                }
+            }
+
+            // Network
+            if (autoinstall.network) {
+                document.getElementById('network-config').value = jsyaml.dump(autoinstall.network, { indent: 2 });
+            }
+            if (autoinstall.proxy) {
+                document.getElementById('proxy').value = autoinstall.proxy;
+            }
+
+            // Storage
+            if (autoinstall.storage) {
+                document.getElementById('storage-config').value = jsyaml.dump(autoinstall.storage, { indent: 2 });
+            }
+
+            // Packages
+            if (autoinstall.packages && Array.isArray(autoinstall.packages)) {
+                document.getElementById('packages').value = autoinstall.packages.join('\n');
+            }
+
+            // Snaps
+            if (autoinstall.snaps && Array.isArray(autoinstall.snaps)) {
+                document.getElementById('snaps').value = autoinstall.snaps.map(s =>
+                    jsyaml.dump(s).trim()
+                ).join('\n---\n');
+            }
+
+            // Kernel
+            if (autoinstall.kernel) {
+                const kernelValue = typeof autoinstall.kernel === 'string' ? autoinstall.kernel : autoinstall.kernel.package;
+                if (kernelValue) {
+                    document.getElementById('kernel').value = kernelValue;
+                }
+            }
+
+            // Drivers
+            if (autoinstall.drivers && autoinstall.drivers.install) {
+                document.getElementById('drivers').checked = true;
+            }
+
+            // Codecs
+            if (autoinstall.codecs && autoinstall.codecs.install) {
+                document.getElementById('codecs').checked = true;
+            }
+
+            // SSH
+            if (autoinstall.ssh) {
+                document.getElementById('ssh-install-server').checked = autoinstall.ssh['install-server'] !== false;
+                document.getElementById('ssh-allow-pw').checked = autoinstall.ssh['allow-pw'] !== false;
+
+                if (autoinstall.ssh['authorized-keys'] && Array.isArray(autoinstall.ssh['authorized-keys'])) {
+                    document.getElementById('ssh-authorized-keys').value = autoinstall.ssh['authorized-keys'].join('\n');
+                }
+            }
+
+            // Advanced
+            if (autoinstall['early-commands'] && Array.isArray(autoinstall['early-commands'])) {
+                document.getElementById('early-commands').value = autoinstall['early-commands'].join('\n');
+            }
+
+            if (autoinstall['late-commands'] && Array.isArray(autoinstall['late-commands'])) {
+                document.getElementById('late-commands').value = autoinstall['late-commands'].join('\n');
+            }
+
+            if (autoinstall['error-commands'] && Array.isArray(autoinstall['error-commands'])) {
+                document.getElementById('error-commands').value = autoinstall['error-commands'].join('\n');
+            }
+
+            if (autoinstall['user-data']) {
+                const userData = typeof autoinstall['user-data'] === 'string' ?
+                    autoinstall['user-data'] :
+                    jsyaml.dump(autoinstall['user-data']);
+                document.getElementById('user-data').value = userData;
+            }
+
+            if (autoinstall.shutdown) {
+                document.getElementById('shutdown').value = autoinstall.shutdown;
+            }
+
+            if (autoinstall['kernel-crash-dumps'] && autoinstall['kernel-crash-dumps'].enabled) {
+                document.getElementById('kernel-crash-dumps').checked = true;
+            }
+
+            if (autoinstall['ubuntu-pro'] && autoinstall['ubuntu-pro'].token) {
+                document.getElementById('ubuntu-pro-token').value = autoinstall['ubuntu-pro'].token;
+            }
+        }
+
+        // Get form state
+        function getFormState() {
+            const formData = {};
+
+            // Get all input, select, and textarea elements
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (el.type === 'checkbox') {
+                    formData[el.id] = el.checked;
+                } else if (el.type === 'file') {
+                    // Skip file inputs
+                } else {
+                    formData[el.id] = el.value;
+                }
+            });
+
+            return formData;
+        }
+
+        // Set form state
+        function setFormState(formData) {
+            Object.keys(formData).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (el.type === 'checkbox') {
+                        el.checked = formData[id];
+                    } else {
+                        el.value = formData[id];
+                    }
+                }
+            });
+        }
+
+        // Save to URL (bookmark support)
+        function saveToURL() {
+            const formData = getFormState();
+            const compressed = btoa(JSON.stringify(formData));
+            window.location.hash = compressed;
+            alert('Configuration saved to URL! You can now bookmark this page.');
+        }
+
+        // Load from URL
+        function loadFromURL() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                try {
+                    const formData = JSON.parse(atob(hash));
+                    setFormState(formData);
+                    generateYAML();
+                } catch (e) {
+                    console.error('Failed to load from URL:', e);
+                }
+            }
+        }
+
+        // Clear form
+        function clearForm() {
+            if (confirm('Are you sure you want to clear all fields?')) {
+                document.querySelectorAll('input[type="text"], input[type="password"], input[type="number"], textarea, select').forEach(el => {
+                    el.value = '';
+                });
+                document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                    el.checked = false;
+                });
+                // Reset defaults
+                document.getElementById('version').value = '1';
+                document.getElementById('ssh-install-server').checked = true;
+                document.getElementById('ssh-allow-pw').checked = true;
+
+                generateYAML();
+                window.location.hash = '';
+            }
+        }
+
+        // Auto-generate YAML on input change
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            if (el.type !== 'file') {
+                el.addEventListener('change', generateYAML);
+                el.addEventListener('input', generateYAML);
+            }
+        });
+
+        // Load from URL on page load
+        window.addEventListener('load', () => {
+            loadFromURL();
+            generateYAML();
+        });
+
+        // Listen for hash changes
+        window.addEventListener('hashchange', loadFromURL);
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+autoinstall:
+  version: 1
+  locale: en_US.UTF-8
+  timezone: America/New_York
+  keyboard:
+    layout: us
+  identity:
+    hostname: ubuntu-server
+    username: ubuntu
+    password: ubuntu
+    realname: Ubuntu User
+  ssh:
+    install-server: true
+    allow-pw: true
+    authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC... user@example.com
+  network:
+    version: 2
+    ethernets:
+      eth0:
+        dhcp4: true
+  storage:
+    layout:
+      name: lvm
+  packages:
+    - curl
+    - wget
+    - git
+    - vim
+    - htop
+    - net-tools
+  snaps:
+    - name: lxd
+      channel: latest/stable
+  updates: security
+  late-commands:
+    - curtin in-target -- apt update
+    - curtin in-target -- apt upgrade -y
+  shutdown: reboot
