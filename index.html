@@ -3,612 +3,880 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Accessible web-based GUI for creating Ubuntu autoinstall configurations with YAML generation, save/load functionality, and bookmark support.">
     <title>Ubuntu Autoinstall Configuration Builder</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- YAML Parser -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ubuntu-orange': '#E95420',
+                        'ubuntu-purple': '#772953',
+                        'ubuntu-dark': '#2C001E',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Ubuntu', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        header {
-            background: linear-gradient(135deg, #E95420 0%, #772953 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-
-        header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            min-height: 600px;
-        }
-
-        .form-section {
-            padding: 30px;
-            overflow-y: auto;
-            max-height: calc(100vh - 250px);
-            border-right: 1px solid #e0e0e0;
-        }
-
-        .preview-section {
-            padding: 30px;
-            background: #f8f9fa;
-            overflow-y: auto;
-            max-height: calc(100vh - 250px);
-        }
-
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid #e0e0e0;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
-
-        .tab {
-            padding: 12px 20px;
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-size: 0.95em;
-            color: #666;
-            transition: all 0.3s;
-            border-bottom: 3px solid transparent;
-        }
-
-        .tab:hover {
-            color: #E95420;
-        }
-
-        .tab.active {
-            color: #E95420;
-            border-bottom-color: #E95420;
-            font-weight: 600;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s;
-        }
-
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #333;
-            font-size: 0.95em;
+        /* Enhanced focus styles for accessibility */
+        *:focus {
+            outline: 3px solid #E95420;
+            outline-offset: 2px;
         }
 
-        .form-group .help-text {
-            display: block;
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 4px;
-            font-style: italic;
-        }
-
-        .form-group input[type="text"],
-        .form-group input[type="password"],
-        .form-group input[type="number"],
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 0.95em;
-            transition: border-color 0.3s;
-            font-family: inherit;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #E95420;
-        }
-
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-            font-family: 'Monaco', 'Courier New', monospace;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .checkbox-group label {
-            margin: 0;
-            cursor: pointer;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.95em;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
+        /* Skip to main content link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
             background: #E95420;
             color: white;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
         }
 
-        .btn-primary:hover {
-            background: #c94315;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(233, 84, 32, 0.3);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-        }
-
-        .yaml-preview {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 0.9em;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .action-buttons {
-            padding: 20px 30px;
-            background: #f8f9fa;
-            border-top: 2px solid #e0e0e0;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-        }
-
-        .file-input-wrapper input[type="file"] {
-            position: absolute;
-            left: -9999px;
-        }
-
-        .section-header {
-            font-size: 1.3em;
-            color: #E95420;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .array-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border-left: 3px solid #E95420;
-        }
-
-        .array-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .btn-remove {
-            background: #dc3545;
-            color: white;
-            padding: 5px 12px;
-            font-size: 0.85em;
-        }
-
-        .btn-remove:hover {
-            background: #c82333;
-        }
-
-        .btn-add {
-            background: #007bff;
-            color: white;
-            padding: 8px 16px;
-            font-size: 0.9em;
-            margin-top: 10px;
-        }
-
-        .btn-add:hover {
-            background: #0056b3;
-        }
-
-        @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-
-            .form-section {
-                border-right: none;
-                border-bottom: 1px solid #e0e0e0;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .info-box {
-            background: #e7f3ff;
-            border-left: 4px solid #2196F3;
-            padding: 12px 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            color: #0c5460;
-        }
-
-        .network-config-item, .storage-config-item {
-            background: #fff;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 15px;
+        .skip-link:focus {
+            top: 0;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Ubuntu Autoinstall Configuration Builder</h1>
-            <p>Create and customize your Ubuntu autoinstall.yaml configuration</p>
+<body class="bg-gradient-to-br from-purple-600 via-purple-700 to-pink-600 min-h-screen p-4 md:p-6">
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Screen reader announcements -->
+    <div aria-live="polite" aria-atomic="true" class="sr-only" id="sr-announcements"></div>
+
+    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-ubuntu-orange to-ubuntu-purple text-white py-8 px-6 md:px-10" role="banner">
+            <h1 class="text-3xl md:text-4xl font-bold mb-2 text-center">
+                Ubuntu Autoinstall Configuration Builder
+            </h1>
+            <p class="text-lg md:text-xl text-center opacity-90">
+                Create and customize your Ubuntu autoinstall.yaml configuration
+            </p>
         </header>
 
-        <div class="main-content">
-            <div class="form-section">
-                <div class="tabs">
-                    <button class="tab active" data-tab="basic">Basic</button>
-                    <button class="tab" data-tab="identity">Identity</button>
-                    <button class="tab" data-tab="network">Network</button>
-                    <button class="tab" data-tab="storage">Storage</button>
-                    <button class="tab" data-tab="software">Software</button>
-                    <button class="tab" data-tab="ssh">SSH</button>
-                    <button class="tab" data-tab="advanced">Advanced</button>
-                </div>
+        <!-- Main Content -->
+        <main id="main-content" role="main">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[600px]">
+                <!-- Form Section -->
+                <section
+                    class="p-6 md:p-8 overflow-y-auto max-h-[calc(100vh-300px)] lg:border-r border-gray-200"
+                    aria-label="Configuration Form"
+                >
+                    <!-- Tabs Navigation -->
+                    <nav role="tablist" aria-label="Configuration sections" class="flex flex-wrap border-b-2 border-gray-200 mb-6">
+                        <button
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="basic-panel"
+                            id="basic-tab"
+                            class="tab px-4 py-3 text-sm font-medium text-gray-600 hover:text-ubuntu-orange transition-colors border-b-3 border-transparent focus:outline-none focus:ring-2 focus:ring-ubuntu-orange active"
+                            data-tab="basic"
+                        >
+                            Basic
+                        </button>
+                        <button
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="identity-panel"
+                            id="identity-tab"
+                            class="tab px-4 py-3 text-sm font-medium text-gray-600 hover:text-ubuntu-orange transition-colors border-b-3 border-transparent focus:outline-none focus:ring-2 focus:ring-ubuntu-orange"
+                            data-tab="identity"
+                            tabindex="-1"
+                        >
+                            Identity
+                        </button>
+                        <button
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="network-panel"
+                            id="network-tab"
+                            class="tab px-4 py-3 text-sm font-medium text-gray-600 hover:text-ubuntu-orange transition-colors border-b-3 border-transparent focus:outline-none focus:ring-2 focus:ring-ubuntu-orange"
+                            data-tab="network"
+                            tabindex="-1"
+                        >
+                            Network
+                        </button>
+                        <button
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="storage-panel"
+                            id="storage-tab"
+                            class="tab px-4 py-3 text-sm font-medium text-gray-600 hover:text-ubuntu-orange transition-colors border-b-3 border-transparent focus:outline-none focus:ring-2 focus:ring-ubuntu-orange"
+                            data-tab="storage"
+                            tabindex="-1"
+                        >
+                            Storage
+                        </button>
+                        <button
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="software-panel"
+                            id="software-tab"
+                            class="tab px-4 py-3 text-sm font-medium text-gray-600 hover:text-ubuntu-orange transition-colors border-b-3 border-transparent focus:outline-none focus:ring-2 focus:ring-ubuntu-orange"
+                            data-tab="software"
+                            tabindex="-1"
+                        >
+                            Software
+                        </button>
+                        <button
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="ssh-panel"
+                            id="ssh-tab"
+                            class="tab px-4 py-3 text-sm font-medium text-gray-600 hover:text-ubuntu-orange transition-colors border-b-3 border-transparent focus:outline-none focus:ring-2 focus:ring-ubuntu-orange"
+                            data-tab="ssh"
+                            tabindex="-1"
+                        >
+                            SSH
+                        </button>
+                        <button
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="advanced-panel"
+                            id="advanced-tab"
+                            class="tab px-4 py-3 text-sm font-medium text-gray-600 hover:text-ubuntu-orange transition-colors border-b-3 border-transparent focus:outline-none focus:ring-2 focus:ring-ubuntu-orange"
+                            data-tab="advanced"
+                            tabindex="-1"
+                        >
+                            Advanced
+                        </button>
+                    </nav>
 
-                <!-- Basic Tab -->
-                <div class="tab-content active" id="basic">
-                    <h2 class="section-header">Basic Configuration</h2>
+                    <!-- Basic Tab -->
+                    <div role="tabpanel" id="basic-panel" aria-labelledby="basic-tab" class="tab-content fade-in">
+                        <h2 class="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200">
+                            Basic Configuration
+                        </h2>
 
-                    <div class="form-group">
-                        <label>Version (required)</label>
-                        <input type="number" id="version" value="1" required>
-                        <span class="help-text">Autoinstall schema version (must be 1)</span>
+                        <div class="mb-5">
+                            <label for="version" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Version <span class="text-red-600" aria-label="required">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                id="version"
+                                name="version"
+                                value="1"
+                                required
+                                aria-required="true"
+                                aria-describedby="version-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="version-help" class="mt-1 text-sm text-gray-600">
+                                Autoinstall schema version (must be 1)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="locale" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Locale
+                            </label>
+                            <input
+                                type="text"
+                                id="locale"
+                                name="locale"
+                                placeholder="en_US.UTF-8"
+                                aria-describedby="locale-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="locale-help" class="mt-1 text-sm text-gray-600">
+                                System language and region
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="timezone" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Timezone
+                            </label>
+                            <input
+                                type="text"
+                                id="timezone"
+                                name="timezone"
+                                placeholder="America/New_York"
+                                aria-describedby="timezone-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="timezone-help" class="mt-1 text-sm text-gray-600">
+                                System timezone (e.g., America/New_York, Europe/London)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="keyboard-layout" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Keyboard Layout
+                            </label>
+                            <input
+                                type="text"
+                                id="keyboard-layout"
+                                name="keyboard-layout"
+                                placeholder="us"
+                                aria-describedby="keyboard-layout-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="keyboard-layout-help" class="mt-1 text-sm text-gray-600">
+                                Keyboard layout (e.g., us, uk, de)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="keyboard-variant" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Keyboard Variant
+                            </label>
+                            <input
+                                type="text"
+                                id="keyboard-variant"
+                                name="keyboard-variant"
+                                placeholder="Optional variant"
+                                aria-describedby="keyboard-variant-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="keyboard-variant-help" class="mt-1 text-sm text-gray-600">
+                                Optional keyboard variant
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="updates" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Updates
+                            </label>
+                            <select
+                                id="updates"
+                                name="updates"
+                                aria-describedby="updates-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                                <option value="">No automatic updates</option>
+                                <option value="security">Security updates only</option>
+                                <option value="all">All updates</option>
+                            </select>
+                            <p id="updates-help" class="mt-1 text-sm text-gray-600">
+                                Update policy during installation
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Locale</label>
-                        <input type="text" id="locale" placeholder="en_US.UTF-8">
-                        <span class="help-text">System language and region</span>
+                    <!-- Identity Tab -->
+                    <div role="tabpanel" id="identity-panel" aria-labelledby="identity-tab" class="tab-content hidden" hidden>
+                        <h2 class="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200">
+                            User Identity
+                        </h2>
+
+                        <div class="mb-5">
+                            <label for="identity-hostname" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Hostname
+                            </label>
+                            <input
+                                type="text"
+                                id="identity-hostname"
+                                name="identity-hostname"
+                                placeholder="ubuntu-server"
+                                aria-describedby="identity-hostname-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="identity-hostname-help" class="mt-1 text-sm text-gray-600">
+                                System hostname
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="identity-username" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Username
+                            </label>
+                            <input
+                                type="text"
+                                id="identity-username"
+                                name="identity-username"
+                                placeholder="ubuntu"
+                                aria-describedby="identity-username-help"
+                                autocomplete="username"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="identity-username-help" class="mt-1 text-sm text-gray-600">
+                                Primary user account name
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="identity-password" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Password
+                            </label>
+                            <input
+                                type="password"
+                                id="identity-password"
+                                name="identity-password"
+                                placeholder="Enter password"
+                                aria-describedby="identity-password-help"
+                                autocomplete="new-password"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="identity-password-help" class="mt-1 text-sm text-gray-600">
+                                User password (will be stored as plain text in YAML - hash it before deployment)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="identity-realname" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Real Name
+                            </label>
+                            <input
+                                type="text"
+                                id="identity-realname"
+                                name="identity-realname"
+                                placeholder="Ubuntu User"
+                                aria-describedby="identity-realname-help"
+                                autocomplete="name"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="identity-realname-help" class="mt-1 text-sm text-gray-600">
+                                User's full name
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Timezone</label>
-                        <input type="text" id="timezone" placeholder="America/New_York">
-                        <span class="help-text">System timezone (e.g., America/New_York, Europe/London)</span>
+                    <!-- Network Tab -->
+                    <div role="tabpanel" id="network-panel" aria-labelledby="network-tab" class="tab-content hidden" hidden>
+                        <h2 class="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200">
+                            Network Configuration
+                        </h2>
+
+                        <div role="note" class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded">
+                            <p class="text-sm text-blue-900">
+                                Network configuration uses Netplan format. Leave empty for DHCP on all interfaces.
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="network-config" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Network Configuration (YAML)
+                            </label>
+                            <textarea
+                                id="network-config"
+                                name="network-config"
+                                rows="10"
+                                placeholder="version: 2&#10;ethernets:&#10;  eth0:&#10;    dhcp4: true"
+                                aria-describedby="network-config-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors font-mono text-sm"
+                            ></textarea>
+                            <p id="network-config-help" class="mt-1 text-sm text-gray-600">
+                                Netplan v2 configuration in YAML format
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="proxy" class="block text-sm font-semibold text-gray-700 mb-2">
+                                HTTP Proxy
+                            </label>
+                            <input
+                                type="text"
+                                id="proxy"
+                                name="proxy"
+                                placeholder="http://proxy.example.com:3128"
+                                aria-describedby="proxy-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="proxy-help" class="mt-1 text-sm text-gray-600">
+                                HTTP proxy URI (optional)
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Keyboard Layout</label>
-                        <input type="text" id="keyboard-layout" placeholder="us">
-                        <span class="help-text">Keyboard layout (e.g., us, uk, de)</span>
+                    <!-- Storage Tab -->
+                    <div role="tabpanel" id="storage-panel" aria-labelledby="storage-tab" class="tab-content hidden" hidden>
+                        <h2 class="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200">
+                            Storage Configuration
+                        </h2>
+
+                        <div role="note" class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded">
+                            <p class="text-sm text-blue-900">
+                                Storage configuration defines disk partitioning. Leave empty for default guided partitioning.
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="storage-config" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Storage Configuration (YAML)
+                            </label>
+                            <textarea
+                                id="storage-config"
+                                name="storage-config"
+                                rows="15"
+                                placeholder="layout:&#10;  name: lvm"
+                                aria-describedby="storage-config-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors font-mono text-sm"
+                            ></textarea>
+                            <p id="storage-config-help" class="mt-1 text-sm text-gray-600">
+                                Storage layout configuration in YAML format
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Keyboard Variant</label>
-                        <input type="text" id="keyboard-variant" placeholder="">
-                        <span class="help-text">Optional keyboard variant</span>
+                    <!-- Software Tab -->
+                    <div role="tabpanel" id="software-panel" aria-labelledby="software-tab" class="tab-content hidden" hidden>
+                        <h2 class="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200">
+                            Software Installation
+                        </h2>
+
+                        <div class="mb-5">
+                            <label for="packages" class="block text-sm font-semibold text-gray-700 mb-2">
+                                APT Packages
+                            </label>
+                            <textarea
+                                id="packages"
+                                name="packages"
+                                rows="6"
+                                placeholder="curl&#10;wget&#10;git&#10;vim"
+                                aria-describedby="packages-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors font-mono text-sm"
+                            ></textarea>
+                            <p id="packages-help" class="mt-1 text-sm text-gray-600">
+                                Package names (one per line)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="snaps" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Snap Packages
+                            </label>
+                            <textarea
+                                id="snaps"
+                                name="snaps"
+                                rows="6"
+                                placeholder="name: lxd&#10;channel: latest/stable&#10;---&#10;name: docker&#10;classic: true"
+                                aria-describedby="snaps-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors font-mono text-sm"
+                            ></textarea>
+                            <p id="snaps-help" class="mt-1 text-sm text-gray-600">
+                                Snap packages (YAML format, use --- to separate multiple snaps)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="kernel" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Kernel Package
+                            </label>
+                            <input
+                                type="text"
+                                id="kernel"
+                                name="kernel"
+                                placeholder="linux-generic-hwe-22.04"
+                                aria-describedby="kernel-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="kernel-help" class="mt-1 text-sm text-gray-600">
+                                Kernel package or flavor (optional)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <div class="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="drivers"
+                                    name="drivers"
+                                    aria-describedby="drivers-help"
+                                    class="w-5 h-5 text-ubuntu-orange border-gray-300 rounded focus:ring-ubuntu-orange focus:ring-2"
+                                >
+                                <label for="drivers" class="text-sm font-semibold text-gray-700 cursor-pointer">
+                                    Install proprietary drivers
+                                </label>
+                            </div>
+                            <p id="drivers-help" class="mt-1 ml-8 text-sm text-gray-600">
+                                Automatically install proprietary hardware drivers
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <div class="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="codecs"
+                                    name="codecs"
+                                    aria-describedby="codecs-help"
+                                    class="w-5 h-5 text-ubuntu-orange border-gray-300 rounded focus:ring-ubuntu-orange focus:ring-2"
+                                >
+                                <label for="codecs" class="text-sm font-semibold text-gray-700 cursor-pointer">
+                                    Install restricted codecs
+                                </label>
+                            </div>
+                            <p id="codecs-help" class="mt-1 ml-8 text-sm text-gray-600">
+                                Install media codecs and plugins
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Updates</label>
-                        <select id="updates">
-                            <option value="">No automatic updates</option>
-                            <option value="security">Security updates only</option>
-                            <option value="all">All updates</option>
-                        </select>
-                        <span class="help-text">Update policy during installation</span>
-                    </div>
-                </div>
+                    <!-- SSH Tab -->
+                    <div role="tabpanel" id="ssh-panel" aria-labelledby="ssh-tab" class="tab-content hidden" hidden>
+                        <h2 class="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200">
+                            SSH Configuration
+                        </h2>
 
-                <!-- Identity Tab -->
-                <div class="tab-content" id="identity">
-                    <h2 class="section-header">User Identity</h2>
+                        <div class="mb-5">
+                            <div class="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="ssh-install-server"
+                                    name="ssh-install-server"
+                                    checked
+                                    aria-describedby="ssh-install-server-help"
+                                    class="w-5 h-5 text-ubuntu-orange border-gray-300 rounded focus:ring-ubuntu-orange focus:ring-2"
+                                >
+                                <label for="ssh-install-server" class="text-sm font-semibold text-gray-700 cursor-pointer">
+                                    Install OpenSSH server
+                                </label>
+                            </div>
+                            <p id="ssh-install-server-help" class="mt-1 ml-8 text-sm text-gray-600">
+                                Install and configure OpenSSH server
+                            </p>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Hostname</label>
-                        <input type="text" id="identity-hostname" placeholder="ubuntu-server">
-                        <span class="help-text">System hostname</span>
-                    </div>
+                        <div class="mb-5">
+                            <div class="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="ssh-allow-pw"
+                                    name="ssh-allow-pw"
+                                    checked
+                                    aria-describedby="ssh-allow-pw-help"
+                                    class="w-5 h-5 text-ubuntu-orange border-gray-300 rounded focus:ring-ubuntu-orange focus:ring-2"
+                                >
+                                <label for="ssh-allow-pw" class="text-sm font-semibold text-gray-700 cursor-pointer">
+                                    Allow password authentication
+                                </label>
+                            </div>
+                            <p id="ssh-allow-pw-help" class="mt-1 ml-8 text-sm text-gray-600">
+                                Permit SSH login with password
+                            </p>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="identity-username" placeholder="ubuntu">
-                        <span class="help-text">Primary user account name</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="identity-password" placeholder="password">
-                        <span class="help-text">User password (will be hashed in output)</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Real Name</label>
-                        <input type="text" id="identity-realname" placeholder="Ubuntu User">
-                        <span class="help-text">User's full name</span>
-                    </div>
-                </div>
-
-                <!-- Network Tab -->
-                <div class="tab-content" id="network">
-                    <h2 class="section-header">Network Configuration</h2>
-
-                    <div class="info-box">
-                        Network configuration uses Netplan format. Leave empty for DHCP on all interfaces.
-                    </div>
-
-                    <div class="form-group">
-                        <label>Network Configuration (YAML)</label>
-                        <textarea id="network-config" rows="10" placeholder="version: 2&#10;ethernets:&#10;  eth0:&#10;    dhcp4: true"></textarea>
-                        <span class="help-text">Netplan v2 configuration in YAML format</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Proxy</label>
-                        <input type="text" id="proxy" placeholder="http://proxy.example.com:3128">
-                        <span class="help-text">HTTP proxy URI (optional)</span>
-                    </div>
-                </div>
-
-                <!-- Storage Tab -->
-                <div class="tab-content" id="storage">
-                    <h2 class="section-header">Storage Configuration</h2>
-
-                    <div class="info-box">
-                        Storage configuration defines disk partitioning. Leave empty for default guided partitioning.
+                        <div class="mb-5">
+                            <label for="ssh-authorized-keys" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Authorized SSH Keys
+                            </label>
+                            <textarea
+                                id="ssh-authorized-keys"
+                                name="ssh-authorized-keys"
+                                rows="4"
+                                placeholder="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ..."
+                                aria-describedby="ssh-authorized-keys-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors font-mono text-sm"
+                            ></textarea>
+                            <p id="ssh-authorized-keys-help" class="mt-1 text-sm text-gray-600">
+                                SSH public keys (one per line)
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Storage Configuration (YAML)</label>
-                        <textarea id="storage-config" rows="15" placeholder='layout:&#10;  name: lvm'></textarea>
-                        <span class="help-text">Storage layout configuration in YAML format</span>
+                    <!-- Advanced Tab -->
+                    <div role="tabpanel" id="advanced-panel" aria-labelledby="advanced-tab" class="tab-content hidden" hidden>
+                        <h2 class="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200">
+                            Advanced Options
+                        </h2>
+
+                        <div class="mb-5">
+                            <label for="early-commands" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Early Commands
+                            </label>
+                            <textarea
+                                id="early-commands"
+                                name="early-commands"
+                                rows="4"
+                                placeholder="echo 'Early command 1'&#10;echo 'Early command 2'"
+                                aria-describedby="early-commands-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors font-mono text-sm"
+                            ></textarea>
+                            <p id="early-commands-help" class="mt-1 text-sm text-gray-600">
+                                Commands to run before installation (one per line)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="late-commands" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Late Commands
+                            </label>
+                            <textarea
+                                id="late-commands"
+                                name="late-commands"
+                                rows="4"
+                                placeholder="echo 'Late command 1'&#10;curtin in-target -- apt update"
+                                aria-describedby="late-commands-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors font-mono text-sm"
+                            ></textarea>
+                            <p id="late-commands-help" class="mt-1 text-sm text-gray-600">
+                                Commands to run after installation (one per line)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="error-commands" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Error Commands
+                            </label>
+                            <textarea
+                                id="error-commands"
+                                name="error-commands"
+                                rows="4"
+                                placeholder="echo 'Installation failed' > /var/log/install-error.log"
+                                aria-describedby="error-commands-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors font-mono text-sm"
+                            ></textarea>
+                            <p id="error-commands-help" class="mt-1 text-sm text-gray-600">
+                                Commands to run on installation error (one per line)
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="user-data" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Cloud-init User Data
+                            </label>
+                            <textarea
+                                id="user-data"
+                                name="user-data"
+                                rows="6"
+                                placeholder="#cloud-config&#10;runcmd:&#10;  - echo 'Hello World'"
+                                aria-describedby="user-data-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors font-mono text-sm"
+                            ></textarea>
+                            <p id="user-data-help" class="mt-1 text-sm text-gray-600">
+                                Cloud-init user-data configuration
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="shutdown" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Shutdown Action
+                            </label>
+                            <select
+                                id="shutdown"
+                                name="shutdown"
+                                aria-describedby="shutdown-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                                <option value="">Default (reboot)</option>
+                                <option value="reboot">Reboot</option>
+                                <option value="poweroff">Power off</option>
+                            </select>
+                            <p id="shutdown-help" class="mt-1 text-sm text-gray-600">
+                                Action to take after installation completes
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <div class="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="kernel-crash-dumps"
+                                    name="kernel-crash-dumps"
+                                    aria-describedby="kernel-crash-dumps-help"
+                                    class="w-5 h-5 text-ubuntu-orange border-gray-300 rounded focus:ring-ubuntu-orange focus:ring-2"
+                                >
+                                <label for="kernel-crash-dumps" class="text-sm font-semibold text-gray-700 cursor-pointer">
+                                    Enable kernel crash dumps
+                                </label>
+                            </div>
+                            <p id="kernel-crash-dumps-help" class="mt-1 ml-8 text-sm text-gray-600">
+                                Enable kdump for kernel crash analysis
+                            </p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label for="ubuntu-pro-token" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Ubuntu Pro Token
+                            </label>
+                            <input
+                                type="text"
+                                id="ubuntu-pro-token"
+                                name="ubuntu-pro-token"
+                                placeholder="C..."
+                                aria-describedby="ubuntu-pro-token-help"
+                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-ubuntu-orange focus:ring-2 focus:ring-ubuntu-orange/20 transition-colors"
+                            >
+                            <p id="ubuntu-pro-token-help" class="mt-1 text-sm text-gray-600">
+                                Ubuntu Pro subscription token (Base58, starts with 'C')
+                            </p>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- Software Tab -->
-                <div class="tab-content" id="software">
-                    <h2 class="section-header">Software Installation</h2>
-
-                    <div class="form-group">
-                        <label>Packages</label>
-                        <textarea id="packages" rows="6" placeholder="curl&#10;wget&#10;git&#10;vim"></textarea>
-                        <span class="help-text">Package names (one per line)</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Snaps</label>
-                        <textarea id="snaps" rows="6" placeholder="name: lxd&#10;channel: latest/stable&#10;---&#10;name: docker&#10;classic: true"></textarea>
-                        <span class="help-text">Snap packages (YAML format, use --- to separate)</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Kernel</label>
-                        <input type="text" id="kernel" placeholder="">
-                        <span class="help-text">Kernel package or flavor (optional)</span>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="drivers">
-                        <label for="drivers">Install proprietary drivers</label>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="codecs">
-                        <label for="codecs">Install restricted codecs</label>
-                    </div>
-                </div>
-
-                <!-- SSH Tab -->
-                <div class="tab-content" id="ssh">
-                    <h2 class="section-header">SSH Configuration</h2>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="ssh-install-server" checked>
-                        <label for="ssh-install-server">Install OpenSSH server</label>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="ssh-allow-pw" checked>
-                        <label for="ssh-allow-pw">Allow password authentication</label>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Authorized Keys</label>
-                        <textarea id="ssh-authorized-keys" rows="4" placeholder="ssh-rsa AAAAB3..."></textarea>
-                        <span class="help-text">SSH public keys (one per line)</span>
-                    </div>
-                </div>
-
-                <!-- Advanced Tab -->
-                <div class="tab-content" id="advanced">
-                    <h2 class="section-header">Advanced Options</h2>
-
-                    <div class="form-group">
-                        <label>Early Commands</label>
-                        <textarea id="early-commands" rows="4" placeholder="echo 'Early command 1'&#10;echo 'Early command 2'"></textarea>
-                        <span class="help-text">Commands to run before installation (one per line)</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Late Commands</label>
-                        <textarea id="late-commands" rows="4" placeholder="echo 'Late command 1'&#10;curtin in-target -- apt update"></textarea>
-                        <span class="help-text">Commands to run after installation (one per line)</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Error Commands</label>
-                        <textarea id="error-commands" rows="4" placeholder=""></textarea>
-                        <span class="help-text">Commands to run on installation error (one per line)</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>User Data (cloud-init)</label>
-                        <textarea id="user-data" rows="6" placeholder="#cloud-config&#10;runcmd:&#10;  - echo 'Hello World'"></textarea>
-                        <span class="help-text">Cloud-init user-data configuration</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Shutdown Action</label>
-                        <select id="shutdown">
-                            <option value="">Default (reboot)</option>
-                            <option value="reboot">Reboot</option>
-                            <option value="poweroff">Power off</option>
-                        </select>
-                        <span class="help-text">Action to take after installation</span>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="kernel-crash-dumps">
-                        <label for="kernel-crash-dumps">Enable kernel crash dumps</label>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Ubuntu Pro Token</label>
-                        <input type="text" id="ubuntu-pro-token" placeholder="C...">
-                        <span class="help-text">Ubuntu Pro subscription token (optional)</span>
-                    </div>
-                </div>
+                <!-- Preview Section -->
+                <section
+                    class="p-6 md:p-8 bg-gray-50 overflow-y-auto max-h-[calc(100vh-300px)]"
+                    aria-label="YAML Preview"
+                >
+                    <h2 class="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200">
+                        YAML Preview
+                    </h2>
+                    <div
+                        id="yaml-preview"
+                        role="region"
+                        aria-live="polite"
+                        aria-label="Generated YAML output"
+                        class="bg-gray-900 text-gray-100 p-5 rounded-lg font-mono text-sm leading-relaxed whitespace-pre-wrap break-words max-h-[500px] overflow-y-auto"
+                    ># Configure options and the YAML will be generated automatically</div>
+                </section>
             </div>
+        </main>
 
-            <div class="preview-section">
-                <h2 class="section-header">YAML Preview</h2>
-                <div class="yaml-preview" id="yaml-preview"># Configure options and click "Generate YAML" to see preview</div>
+        <!-- Action Buttons -->
+        <footer class="p-6 bg-gray-50 border-t-2 border-gray-200" role="contentinfo">
+            <div class="flex flex-wrap gap-3 justify-center">
+                <button
+                    onclick="generateYAML()"
+                    class="px-5 py-2.5 bg-ubuntu-orange text-white rounded-lg font-semibold hover:bg-ubuntu-orange/90 focus:ring-4 focus:ring-ubuntu-orange/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                    aria-label="Generate YAML configuration"
+                >
+                    Generate YAML
+                </button>
+                <button
+                    onclick="downloadYAML()"
+                    class="px-5 py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 focus:ring-4 focus:ring-green-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                    aria-label="Download autoinstall.yaml file"
+                >
+                    Download autoinstall.yaml
+                </button>
+                <button
+                    onclick="copyToClipboard()"
+                    class="px-5 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 focus:ring-4 focus:ring-gray-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                    aria-label="Copy YAML to clipboard"
+                >
+                    Copy to Clipboard
+                </button>
+                <label
+                    for="file-input"
+                    class="px-5 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 focus:ring-4 focus:ring-gray-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg cursor-pointer inline-block"
+                    tabindex="0"
+                    role="button"
+                    aria-label="Load YAML file from disk"
+                    onkeydown="if(event.key === 'Enter' || event.key === ' ') document.getElementById('file-input').click()"
+                >
+                    Load YAML File
+                </label>
+                <input
+                    type="file"
+                    id="file-input"
+                    accept=".yaml,.yml"
+                    onchange="loadYAMLFile(event)"
+                    class="sr-only"
+                    aria-label="Choose YAML file to load"
+                >
+                <button
+                    onclick="saveToURL()"
+                    class="px-5 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 focus:ring-4 focus:ring-gray-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                    aria-label="Save configuration to URL for bookmarking"
+                >
+                    Save to Bookmark
+                </button>
+                <button
+                    onclick="clearForm()"
+                    class="px-5 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 focus:ring-4 focus:ring-gray-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                    aria-label="Clear all form fields"
+                >
+                    Clear Form
+                </button>
             </div>
-        </div>
-
-        <div class="action-buttons">
-            <button class="btn-primary" onclick="generateYAML()">Generate YAML</button>
-            <button class="btn-success" onclick="downloadYAML()">Download autoinstall.yaml</button>
-            <button class="btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
-            <div class="file-input-wrapper">
-                <button class="btn-secondary">Load YAML File</button>
-                <input type="file" id="file-input" accept=".yaml,.yml" onchange="loadYAMLFile(event)">
-            </div>
-            <button class="btn-secondary" onclick="saveToURL()">Save to Bookmark</button>
-            <button class="btn-secondary" onclick="clearForm()">Clear Form</button>
-        </div>
+        </footer>
     </div>
 
     <script>
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
+        // Accessibility: Screen reader announcements
+        function announceToScreenReader(message) {
+            const announcer = document.getElementById('sr-announcements');
+            announcer.textContent = message;
+            setTimeout(() => {
+                announcer.textContent = '';
+            }, 1000);
+        }
+
+        // Tab switching with ARIA support
+        document.querySelectorAll('.tab').forEach((tab, index) => {
             tab.addEventListener('click', () => {
-                const tabName = tab.dataset.tab;
+                switchTab(tab);
+            });
 
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            // Keyboard navigation for tabs
+            tab.addEventListener('keydown', (e) => {
+                const tabs = Array.from(document.querySelectorAll('.tab'));
+                let newIndex = index;
 
-                tab.classList.add('active');
-                document.getElementById(tabName).classList.add('active');
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    newIndex = (index + 1) % tabs.length;
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    newIndex = (index - 1 + tabs.length) % tabs.length;
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    newIndex = 0;
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    newIndex = tabs.length - 1;
+                } else {
+                    return;
+                }
+
+                tabs[newIndex].click();
+                tabs[newIndex].focus();
             });
         });
+
+        function switchTab(clickedTab) {
+            const tabName = clickedTab.dataset.tab;
+            const allTabs = document.querySelectorAll('.tab');
+            const allPanels = document.querySelectorAll('.tab-content');
+
+            // Update tabs
+            allTabs.forEach(t => {
+                const isActive = t === clickedTab;
+                t.classList.toggle('active', isActive);
+                t.classList.toggle('text-ubuntu-orange', isActive);
+                t.classList.toggle('border-b-4', isActive);
+                t.classList.toggle('border-ubuntu-orange', isActive);
+                t.classList.toggle('font-semibold', isActive);
+                t.setAttribute('aria-selected', isActive);
+                t.setAttribute('tabindex', isActive ? '0' : '-1');
+            });
+
+            // Update panels
+            allPanels.forEach(panel => {
+                const isActive = panel.id === `${tabName}-panel`;
+                panel.classList.toggle('hidden', !isActive);
+                panel.classList.toggle('fade-in', isActive);
+                if (isActive) {
+                    panel.removeAttribute('hidden');
+                } else {
+                    panel.setAttribute('hidden', '');
+                }
+            });
+
+            announceToScreenReader(`Switched to ${tabName} tab`);
+        }
 
         // Generate YAML configuration
         function generateYAML() {
@@ -665,6 +933,7 @@
                     config.autoinstall.network = jsyaml.load(networkConfig);
                 } catch (e) {
                     console.error('Invalid network YAML:', e);
+                    announceToScreenReader('Error: Invalid network YAML configuration');
                 }
             }
 
@@ -679,6 +948,7 @@
                     config.autoinstall.storage = jsyaml.load(storageConfig);
                 } catch (e) {
                     console.error('Invalid storage YAML:', e);
+                    announceToScreenReader('Error: Invalid storage YAML configuration');
                 }
             }
 
@@ -785,6 +1055,7 @@
             });
 
             document.getElementById('yaml-preview').textContent = yaml;
+            announceToScreenReader('YAML configuration generated');
             return yaml;
         }
 
@@ -800,6 +1071,7 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            announceToScreenReader('YAML file downloaded');
         }
 
         // Copy to clipboard
@@ -807,9 +1079,11 @@
             const yaml = generateYAML();
             navigator.clipboard.writeText(yaml).then(() => {
                 alert('YAML copied to clipboard!');
+                announceToScreenReader('YAML copied to clipboard');
             }).catch(err => {
                 console.error('Failed to copy:', err);
                 alert('Failed to copy to clipboard');
+                announceToScreenReader('Failed to copy to clipboard');
             });
         }
 
@@ -826,9 +1100,11 @@
                     populateFormFromData(data);
                     generateYAML();
                     alert('YAML file loaded successfully!');
+                    announceToScreenReader('YAML file loaded successfully');
                 } catch (err) {
                     console.error('Error loading YAML:', err);
                     alert('Error loading YAML file: ' + err.message);
+                    announceToScreenReader('Error loading YAML file');
                 }
             };
             reader.readAsText(file);
@@ -974,7 +1250,7 @@
                     formData[el.id] = el.checked;
                 } else if (el.type === 'file') {
                     // Skip file inputs
-                } else {
+                } else if (el.id) {
                     formData[el.id] = el.value;
                 }
             });
@@ -1002,6 +1278,7 @@
             const compressed = btoa(JSON.stringify(formData));
             window.location.hash = compressed;
             alert('Configuration saved to URL! You can now bookmark this page.');
+            announceToScreenReader('Configuration saved to URL');
         }
 
         // Load from URL
@@ -1012,6 +1289,7 @@
                     const formData = JSON.parse(atob(hash));
                     setFormState(formData);
                     generateYAML();
+                    announceToScreenReader('Configuration loaded from URL');
                 } catch (e) {
                     console.error('Failed to load from URL:', e);
                 }
@@ -1034,6 +1312,7 @@
 
                 generateYAML();
                 window.location.hash = '';
+                announceToScreenReader('Form cleared');
             }
         }
 

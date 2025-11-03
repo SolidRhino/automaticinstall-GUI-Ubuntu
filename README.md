@@ -6,13 +6,44 @@ A web-based GUI for creating and managing Ubuntu autoinstall configurations. Thi
 
 ## Features
 
-- **User-Friendly Interface**: Organized tabs for different configuration sections
+- **User-Friendly Interface**: Organized tabs for different configuration sections, built with Tailwind CSS
 - **Complete Coverage**: Supports all major autoinstall schema fields
 - **YAML Generation**: Real-time YAML preview as you configure
 - **Save & Load**: Import existing autoinstall.yaml files or export new ones
 - **Bookmark Support**: Save your configuration in the URL for easy sharing and bookmarking
 - **No Installation Required**: Pure HTML/CSS/JavaScript - runs in any modern browser
 - **GitHub Pages Ready**: Host directly on GitHub Pages
+- **Fully Accessible**: WCAG 2.1 compliant with comprehensive accessibility features
+
+## Accessibility Features
+
+This application is designed to be fully accessible for users with disabilities:
+
+### Screen Reader Support
+- **ARIA Labels**: All form inputs have proper ARIA labels and descriptions
+- **ARIA Live Regions**: Dynamic updates are announced to screen readers
+- **Semantic HTML**: Proper use of semantic elements (header, main, nav, section, footer)
+- **Role Attributes**: Correct ARIA roles for tabs, tabpanels, and other interactive elements
+
+### Keyboard Navigation
+- **Tab Navigation**: Full keyboard support for all interactive elements
+- **Arrow Key Navigation**: Use Left/Right arrows to navigate between tabs
+- **Home/End Keys**: Jump to first/last tab quickly
+- **Skip Links**: "Skip to main content" link for keyboard users
+- **Focus Indicators**: Clear, visible focus outlines on all interactive elements
+
+### Visual Accessibility
+- **High Contrast**: Sufficient color contrast ratios for text readability
+- **Focus Styles**: Enhanced 3px outline for focus visibility
+- **Responsive Design**: Works on all screen sizes and zoom levels
+- **Clear Labels**: All form fields have visible labels and help text
+
+### Other Accessibility Features
+- **Autocomplete Attributes**: Proper autocomplete for username, password, and name fields
+- **Required Field Indicators**: Visual and screen reader indicators for required fields
+- **Error Announcements**: Screen reader announcements for validation errors
+- **Status Messages**: Live region announcements for actions (save, load, generate)
+- **Keyboard-Accessible File Upload**: File input button is fully keyboard accessible
 
 ## Configuration Sections
 
@@ -128,6 +159,9 @@ Tested on:
 
 ### Dependencies
 
+- **Tailwind CSS**: Utility-first CSS framework for styling
+  - Loaded from CDN: `https://cdn.tailwindcss.com`
+  - Provides responsive, accessible, and modern design
 - **js-yaml (4.1.0)**: YAML parsing and generation
   - Loaded from CDN: `https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js`
 
