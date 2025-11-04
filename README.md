@@ -20,6 +20,14 @@ A web-based GUI for creating and managing Ubuntu autoinstall configurations. Thi
 - **🔒 Password Hashing**: Built-in SHA-512 password hash generator for secure password storage
 - **📋 Configuration Templates**: 6 pre-configured templates for common server setups (Web Server, Database, Docker, Kubernetes, Development, Minimal)
 - **🌙 Dark Mode**: Toggle between light and dark themes with preference persistence
+- **🔍 Schema Validation**: Validate your configuration against the official Ubuntu autoinstall schema with detailed error and warning messages
+- **📊 Configuration Diff Tool**: Compare two autoinstall configurations side-by-side to see additions, removals, and modifications
+- **🧙 Storage Wizard**: Visual 3-step wizard for creating disk partitioning configurations without writing YAML
+- **🧙 Network Wizard**: Visual 3-step wizard for creating Netplan network configurations with guided setup
+- **☁️ Cloud-Init Export**: Convert your autoinstall configuration to cloud-init user-data format for use with cloud providers
+- **🔍 Configuration Simulator**: Preview and analyze your system configuration before deployment with issue detection
+- **📥 System Importer**: Import configuration from existing systems using command outputs
+- **🌐 Multi-Language Support**: Full UI translation in English, Spanish, French, German, and Dutch
 
 ### Technical
 - **No Build Process Required**: Uses React via CDN - runs directly in any modern browser
@@ -189,6 +197,182 @@ Invalid fields will show red borders and error messages below the field.
 - Your preference is saved to localStorage
 - Dark mode applies to all UI elements including modals and validation messages
 
+### Schema Validation
+
+1. Configure your autoinstall settings
+2. Click **"✅ Validate Config"** in the toolbar
+3. View validation results showing:
+   - **Errors**: Critical issues that must be fixed (red)
+   - **Warnings**: Best practice recommendations (yellow)
+   - **Summary**: Quick overview of validation status
+4. Fix any errors or warnings and validate again
+
+**What gets validated:**
+- Required fields (version, identity fields if present)
+- Hostname format (RFC-compliant)
+- Username format (Linux requirements)
+- Package names and format
+- SSH key format
+- Ubuntu Pro token format
+- YAML syntax
+
+### Configuration Diff Tool
+
+1. Click **"📊 Compare Configs"** in the toolbar
+2. Load or paste two configurations to compare:
+   - **Upload YAML files** using the file buttons
+   - **Paste YAML** directly into the text areas
+3. Click **"Compare"** to see the differences
+4. View color-coded changes:
+   - **Green**: Values only in Config 2 (additions)
+   - **Red**: Values only in Config 1 (removals)
+   - **Yellow**: Values that differ (modifications)
+5. Export the comparison as a text report
+
+**Use cases:**
+- Compare different versions of your configuration
+- See what changed between templates
+- Audit configuration differences before deployment
+
+### Storage Wizard
+
+1. Go to the **Storage** tab
+2. Click **"🧙 Storage Wizard"**
+3. Follow the 3-step wizard:
+   - **Step 1: Select Target Disk**
+     - Choose from common disk paths (/dev/sda, /dev/nvme0n1, /dev/vda, etc.)
+   - **Step 2: Choose Partition Scheme**
+     - **Simple (Direct)**: Use entire disk with default partitioning
+     - **LVM**: Logical Volume Manager for flexible resizing
+     - **Custom Partitions**: Define your own partition layout with visual editor
+   - **Step 3: Review Configuration**
+     - See the generated YAML before applying
+4. Click **"Apply Configuration"** to insert into your config
+
+**Custom Partition Editor:**
+- Add/remove partitions
+- Configure size, mount point, and filesystem for each
+- Supports ext4, xfs, btrfs, and swap
+- Real-time YAML generation
+
+### Network Wizard
+
+1. Go to the **Network** tab
+2. Click **"🧙 Network Wizard"**
+3. Follow the 3-step wizard:
+   - **Step 1: Select Network Interface**
+     - Choose from common interfaces (eth0, ens33, enp0s3, etc.)
+     - Or specify a custom interface name
+   - **Step 2: Choose Configuration Type**
+     - **DHCP (Automatic)**: Automatic IP configuration
+     - **Static IP (Manual)**: Specify IP address, gateway, and DNS
+   - **Step 3: Review Configuration**
+     - See the generated Netplan YAML before applying
+4. Click **"Apply Configuration"** to insert into your config
+
+**Static IP Configuration:**
+- IP address with CIDR notation (e.g., 192.168.1.100/24)
+- Gateway address
+- DNS servers (one per line)
+- Generates proper Netplan v2 format
+
+### Cloud-Init Export
+
+1. Configure your autoinstall settings
+2. Click **"☁️ Export to Cloud-Init"** in the toolbar
+3. Review the configuration summary showing what will be converted
+4. View the generated cloud-init user-data YAML
+5. Download as `user-data.yaml` or copy to clipboard
+
+**What gets converted:**
+- System settings (hostname, timezone, locale, keyboard)
+- User accounts with passwords and SSH keys
+- Package installation (APT and Snap)
+- Network configuration
+- Commands (early, late, and snap installation commands)
+- SSH server and configuration
+- Ubuntu Pro token
+- Power state after completion
+
+**Use cases:**
+- Deploy to cloud providers (AWS, Azure, GCP, DigitalOcean)
+- Use with cloud-init-enabled systems
+- Virtual machine provisioning
+- Container initialization
+
+### Configuration Simulator (Preview System)
+
+1. Configure your autoinstall settings
+2. Click **"🔍 Preview System"** in the toolbar
+3. Review the complete system analysis:
+   - **System Information**: Hostname, locale, timezone, keyboard, updates
+   - **User Accounts**: Configured users with password types and SSH keys
+   - **Network Configuration**: Interface details and IP addresses
+   - **Storage Layout**: Disk partitioning scheme
+   - **Software**: Package counts and installed applications
+   - **Security Analysis**: Security level scoring and recommendations
+
+**Issue Detection:**
+- **Critical Issues** (red): Must be fixed (e.g., no user account, duplicate mount points)
+- **Warnings** (yellow): Best practice recommendations (e.g., plain text passwords, missing SSH keys)
+
+**Security Scoring:**
+- Evaluates SSH configuration, password hashing, Ubuntu Pro, and update settings
+- Provides overall security level: Excellent, Good, Moderate, or Low
+
+### System Importer
+
+1. Click **"📥 Import from System"** in the toolbar
+2. Follow the 5-step wizard:
+
+**Step 1: System Information**
+- Paste output from `hostnamectl` (hostname)
+- Paste output from `timedatectl` (timezone)
+- Paste output from `locale` (locale settings)
+
+**Step 2: Network Configuration**
+- Paste output from `ip addr show` (network interfaces and IP addresses)
+
+**Step 3: Installed Packages**
+- Paste output from `dpkg -l` or `apt list --installed`
+- Base system packages are automatically filtered out
+
+**Step 4: User Accounts**
+- Paste output from `cat /etc/passwd`
+- Only regular user accounts (UID ≥ 1000) are imported
+- Passwords are NOT imported for security
+
+**Step 5: Review and Apply**
+- Review the generated configuration
+- See summary of imported items
+- Apply to merge with current configuration
+
+**Use cases:**
+- Recreate existing server configurations
+- Document current system setup
+- Create templates from production systems
+- Migrate to new installations
+
+### Multi-Language Support
+
+1. Click the **language selector** (flag dropdown) in the header
+2. Choose from:
+   - 🇬🇧 English
+   - 🇪🇸 Español (Spanish)
+   - 🇫🇷 Français (French)
+   - 🇩🇪 Deutsch (German)
+   - 🇳🇱 Nederlands (Dutch)
+3. The page will reload with all UI text translated
+4. Language preference is saved to browser localStorage
+5. Auto-detects browser language on first visit
+
+**What's translated:**
+- All toolbar buttons and tab labels
+- Form labels and help text
+- Validation messages
+- Modal titles and descriptions
+- Button text and placeholders
+
 ## Autoinstall Schema Reference
 
 This tool is based on the official Ubuntu autoinstall schema:
@@ -245,8 +429,17 @@ The application uses modern React patterns:
 
 ```
 .
-├── index.html          # Main application (HTML + CSS + JavaScript)
-└── README.md          # This file
+├── index.html              # Main application (HTML + CSS + JavaScript)
+├── i18n.js                 # Multi-language support (EN, ES, FR, DE, NL)
+├── schema-validator.js     # Schema validation module with modal
+├── diff-tool.js            # Configuration comparison module with modal
+├── storage-wizard.js       # Storage configuration wizard with 3-step UI
+├── network-wizard.js       # Network configuration wizard with 3-step UI
+├── cloud-init-exporter.js  # Cloud-init format converter with modal
+├── config-simulator.js     # System preview and analysis module with modal
+├── system-importer.js      # System configuration importer with 5-step wizard
+├── example-autoinstall.yaml # Sample configuration file
+└── README.md               # This file
 ```
 
 ### State Persistence
@@ -314,13 +507,20 @@ For issues related to:
 
 ## Roadmap
 
-- [ ] Add validation for required fields
-- [ ] Interactive storage layout designer
-- [ ] Network configuration wizard
-- [ ] Example templates gallery
-- [ ] Dark mode support
-- [ ] Export to cloud-init format
-- [ ] Schema validation against official JSON schema
+- [x] Add validation for required fields
+- [x] Interactive storage layout designer
+- [x] Network configuration wizard
+- [x] Example templates gallery
+- [x] Dark mode support
+- [x] Schema validation against official JSON schema
+- [x] Export to cloud-init format
+- [x] Live configuration testing/simulation
+- [x] Import from existing system configuration
+- [x] Multi-language support (EN, ES, FR, DE, NL)
+- [ ] Additional language translations (PT, IT, RU, ZH, JA)
+- [ ] Configuration versioning and history
+- [ ] Advanced storage layouts (RAID, ZFS)
+- [ ] Integration with Terraform/Ansible
 
 ---
 
