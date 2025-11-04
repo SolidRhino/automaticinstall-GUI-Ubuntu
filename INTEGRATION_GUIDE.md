@@ -13,6 +13,56 @@ The following files have been created and are ready to use:
 5. **service-worker.js** - Service worker for offline support
 6. **index.html** - Updated with CDN links and CSS (partially complete)
 
+## 🌍 Cross-Platform Keyboard Shortcuts
+
+The keyboard shortcuts system is fully cross-platform and automatically adapts to the user's operating system:
+
+### How It Works
+
+1. **Platform Detection**: Automatically detects macOS, Windows, or Linux
+2. **Modifier Key Mapping**:
+   - macOS: Uses `⌘ Command` key (event.metaKey)
+   - Windows/Linux: Uses `Ctrl` key (event.ctrlKey)
+3. **Universal Registration**: Use `mod` in shortcut definitions
+4. **Smart Display**: Shows platform-specific symbols in UI
+
+### Keyboard Symbols by Platform
+
+| Platform | Modifier | Alt | Shift | Display Example |
+|----------|----------|-----|-------|-----------------|
+| **macOS** | ⌘ (Command) | ⌥ (Option) | ⇧ (Shift) | ⌘ S |
+| **Windows** | Ctrl | Alt | Shift | Ctrl+S |
+| **Linux** | Ctrl | Alt | Shift | Ctrl+S |
+
+### Example Registration
+
+```javascript
+// ✅ Correct - Use 'mod' for cross-platform
+shortcuts.register('mod+s', callback, 'Save');          // ⌘S on Mac, Ctrl+S elsewhere
+shortcuts.register('mod+shift+s', callback, 'Save As'); // ⌘⇧S on Mac, Ctrl+Shift+S elsewhere
+
+// ❌ Incorrect - Don't hardcode 'ctrl'
+shortcuts.register('ctrl+s', callback, 'Save'); // Only works with Ctrl, not Cmd on Mac
+```
+
+### Built-in Platform Detection
+
+The system automatically:
+- Detects platform using `navigator.platform`
+- Listens for both `ctrlKey` and `metaKey` events
+- Formats display strings with correct symbols
+- Shows platform indicator in shortcuts modal
+
+### Testing Across Platforms
+
+To test keyboard shortcuts:
+
+1. **macOS**: Use Command (⌘) key + letter
+2. **Windows**: Use Ctrl key + letter
+3. **Linux**: Use Ctrl key + letter
+
+All shortcuts work identically across platforms!
+
 ## 🔧 Phase 2: Manual Integration Required
 
 ### Step 1: Initialize Managers in App Component
@@ -65,61 +115,71 @@ useEffect(() => {
 
 ### Step 2: Add Keyboard Shortcuts Function
 
+**Important:** Use `mod` instead of `ctrl` for cross-platform support. This automatically becomes:
+- `⌘ Command` on macOS
+- `Ctrl` on Windows/Linux
+
 ```javascript
 const registerKeyboardShortcuts = () => {
     const shortcuts = keyboardShortcuts.current;
 
-    // Download YAML
-    shortcuts.register('ctrl+s', (e) => {
+    // Download YAML (Cmd+S on Mac, Ctrl+S on Windows/Linux)
+    shortcuts.register('mod+s', (e) => {
         e.preventDefault();
         downloadYAML();
     }, 'Download YAML file');
 
-    // Undo
-    shortcuts.register('ctrl+z', () => {
+    // Undo (Cmd+Z on Mac, Ctrl+Z on Windows/Linux)
+    shortcuts.register('mod+z', () => {
         handleUndo();
     }, 'Undo last change');
 
-    // Redo
-    shortcuts.register('ctrl+y', () => {
+    // Redo (Cmd+Y on Mac, Ctrl+Y on Windows/Linux)
+    shortcuts.register('mod+y', () => {
         handleRedo();
     }, 'Redo last change');
 
-    shortcuts.register('ctrl+shift+y', () => {
+    shortcuts.register('mod+shift+y', () => {
         handleRedo();
     }, 'Redo (alternative)');
 
     // Open versions
-    shortcuts.register('ctrl+k', () => {
+    shortcuts.register('mod+k', () => {
         setShowVersions(true);
     }, 'Open version manager');
 
     // Bookmark
-    shortcuts.register('ctrl+b', () => {
+    shortcuts.register('mod+b', () => {
         saveToURL();
     }, 'Save to bookmark');
 
     // Show shortcuts
-    shortcuts.register('ctrl+/', () => {
+    shortcuts.register('mod+/', () => {
         setShowKeyboardHelp(true);
     }, 'Show keyboard shortcuts');
 
     // Copy YAML
-    shortcuts.register('ctrl+shift+c', () => {
+    shortcuts.register('mod+shift+c', () => {
         copyToClipboard();
     }, 'Copy YAML to clipboard');
 
     // Validate
-    shortcuts.register('ctrl+shift+v', () => {
+    shortcuts.register('mod+shift+v', () => {
         handleValidate();
     }, 'Validate configuration');
 
     // Templates
-    shortcuts.register('ctrl+shift+t', () => {
+    shortcuts.register('mod+shift+t', () => {
         setShowTemplates(true);
     }, 'Open templates');
 };
 ```
+
+**Platform Detection:**
+The KeyboardShortcuts class automatically detects the platform and:
+- Registers shortcuts to work with both Ctrl and Cmd keys
+- Displays shortcuts correctly in the UI (⌘ on Mac, Ctrl elsewhere)
+- Shows platform indicator in the shortcuts modal (🍎 macOS, 🪟 Windows, 🐧 Linux)
 
 ### Step 3: Add Undo/Redo Functions
 

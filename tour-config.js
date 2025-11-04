@@ -61,17 +61,24 @@ const tourSteps = [
         position: 'top'
     },
     {
-        intro: `
-            <h3>⌨️ Keyboard Shortcuts</h3>
-            <ul style="text-align: left; padding-left: 20px;">
-                <li><kbd>Ctrl+S</kbd> - Download YAML</li>
-                <li><kbd>Ctrl+Z</kbd> - Undo</li>
-                <li><kbd>Ctrl+Y</kbd> - Redo</li>
-                <li><kbd>Ctrl+K</kbd> - Open versions</li>
-                <li><kbd>Ctrl+/</kbd> - Show shortcuts</li>
-                <li><kbd>←/→</kbd> - Navigate tabs</li>
-            </ul>
-        `
+        intro: function() {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const mod = isMac ? '⌘' : 'Ctrl';
+            return `
+                <h3>⌨️ Keyboard Shortcuts</h3>
+                <p style="margin-bottom: 10px; color: #6b7280; font-size: 14px;">
+                    ${isMac ? '🍎 Using macOS shortcuts' : '🪟 Using Windows/Linux shortcuts'}
+                </p>
+                <ul style="text-align: left; padding-left: 20px;">
+                    <li><kbd>${mod}+S</kbd> - Download YAML</li>
+                    <li><kbd>${mod}+Z</kbd> - Undo</li>
+                    <li><kbd>${mod}+Y</kbd> - Redo</li>
+                    <li><kbd>${mod}+K</kbd> - Open versions</li>
+                    <li><kbd>${mod}+/</kbd> - Show shortcuts</li>
+                    <li><kbd>←/→</kbd> - Navigate tabs</li>
+                </ul>
+            `;
+        }
     },
     {
         intro: `

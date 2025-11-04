@@ -125,16 +125,76 @@ class KeyboardShortcuts {
     constructor() {
         this.shortcuts = new Map();
         this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.isMac = this.detectMac();
+    }
+
+    /**
+     * Detect if user is on macOS
+     * @returns {boolean} True if macOS
+     */
+    detectMac() {
+        return navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
+               navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+    }
+
+    /**
+     * Get modifier key name for current OS
+     * @returns {string} 'Cmd' for Mac, 'Ctrl' for others
+     */
+    getModifierKey() {
+        return this.isMac ? 'Cmd' : 'Ctrl';
     }
 
     /**
      * Register a keyboard shortcut
-     * @param {string} key - Key combination (e.g., 'ctrl+s', 'ctrl+shift+p')
+     * @param {string} key - Key combination (e.g., 'mod+s', 'mod+shift+p')
+     *                       Use 'mod' for Ctrl/Cmd depending on OS
      * @param {Function} callback - Function to call
      * @param {string} description - Description of the shortcut
      */
     register(key, callback, description = '') {
-        this.shortcuts.set(key.toLowerCase(), { callback, description });
+        // Replace 'mod' with 'ctrl' for internal storage (both Ctrl and Cmd will match)
+        const normalizedKey = key.toLowerCase().replace('mod', 'ctrl');
+        this.shortcuts.set(normalizedKey, {
+            callback,
+            description,
+            displayKey: this.formatDisplayKey(key)
+        });
+    }
+
+    /**
+     * Format key for display based on OS
+     * @param {string} key - Key combination
+     * @returns {string} Formatted key for display
+     */
+    formatDisplayKey(key) {
+        let displayKey = key;
+
+        if (this.isMac) {
+            displayKey = displayKey
+                .replace(/mod/gi, '⌘')
+                .replace(/ctrl/gi, '⌘')
+                .replace(/alt/gi, '⌥')
+                .replace(/shift/gi, '⇧')
+                .replace(/\+/g, ' ');
+        } else {
+            displayKey = displayKey
+                .replace(/mod/gi, 'Ctrl')
+                .replace(/ctrl/gi, 'Ctrl')
+                .replace(/alt/gi, 'Alt')
+                .replace(/shift/gi, 'Shift')
+                .replace(/\+/g, '+');
+        }
+
+        // Capitalize the last key
+        const parts = displayKey.split(/[\s+]/);
+        if (parts.length > 0) {
+            const lastPart = parts[parts.length - 1];
+            parts[parts.length - 1] = lastPart.charAt(0).toUpperCase() + lastPart.slice(1);
+            displayKey = this.isMac ? parts.join(' ') : parts.join('+');
+        }
+
+        return displayKey;
     }
 
     /**
@@ -142,7 +202,8 @@ class KeyboardShortcuts {
      * @param {string} key - Key combination to remove
      */
     unregister(key) {
-        this.shortcuts.delete(key.toLowerCase());
+        const normalizedKey = key.toLowerCase().replace('mod', 'ctrl');
+        this.shortcuts.delete(normalizedKey);
     }
 
     /**
@@ -152,6 +213,7 @@ class KeyboardShortcuts {
     handleKeyDown(event) {
         const keys = [];
 
+        // Support both Ctrl (Windows/Linux) and Cmd (macOS)
         if (event.ctrlKey || event.metaKey) keys.push('ctrl');
         if (event.altKey) keys.push('alt');
         if (event.shiftKey) keys.push('shift');
@@ -185,18 +247,33 @@ class KeyboardShortcuts {
     }
 
     /**
-     * Get all registered shortcuts
-     * @returns {Array} Array of shortcuts with descriptions
+     * Get all registered shortcuts with platform-specific display
+     * @returns {Array} Array of shortcuts with descriptions and display keys
      */
     getAll() {
         const shortcuts = [];
         this.shortcuts.forEach((value, key) => {
             shortcuts.push({
-                key,
-                description: value.description
+                key: value.displayKey,
+                description: value.description,
+                rawKey: key
             });
         });
         return shortcuts;
+    }
+
+    /**
+     * Get current platform info
+     * @returns {Object} Platform information
+     */
+    getPlatformInfo() {
+        return {
+            isMac: this.isMac,
+            isWindows: navigator.platform.toUpperCase().indexOf('WIN') >= 0,
+            isLinux: navigator.platform.toUpperCase().indexOf('LINUX') >= 0,
+            modifierKey: this.getModifierKey(),
+            platform: navigator.platform
+        };
     }
 }
 
