@@ -30,9 +30,10 @@ A web-based GUI for creating and managing Ubuntu autoinstall configurations. Thi
 - **🌐 Multi-Language Support**: Full UI translation in English, Spanish, French, German, and Dutch
 
 ### Technical
-- **No Build Process Required**: Uses React via CDN - runs directly in any modern browser
-- **GitHub Pages Ready**: Single HTML file, perfect for static hosting
+- **Modern Build System**: TypeScript + Vite for optimal performance and developer experience
+- **GitHub Pages Ready**: Automated deployment with GitHub Actions
 - **Fully Accessible**: WCAG 2.1 compliant with comprehensive accessibility features
+- **Progressive Web App**: Offline support with service worker caching
 
 ## Accessibility Features
 
@@ -114,7 +115,7 @@ The GUI is organized into the following sections:
 
 Visit the hosted version: [Your GitHub Pages URL]
 
-### Local Usage
+### Local Development
 
 1. Clone this repository:
    ```bash
@@ -122,17 +123,32 @@ Visit the hosted version: [Your GitHub Pages URL]
    cd automaticinstall-GUI-Ubuntu
    ```
 
-2. Open `index.html` in your web browser:
+2. Install dependencies:
    ```bash
-   # On Linux
-   xdg-open index.html
-
-   # On macOS
-   open index.html
-
-   # On Windows
-   start index.html
+   npm install
    ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:3000`
+
+4. Build for production:
+   ```bash
+   npm run build
+   ```
+   Production files will be in the `dist/` directory
+
+5. Preview production build:
+   ```bash
+   npm run preview
+   ```
+
+### Additional Commands
+
+- **Type check**: `npm run type-check` - Check TypeScript errors without building
+- **Lint**: `npm run lint` - Run ESLint on TypeScript files
 
 ### Creating a Configuration
 
@@ -394,26 +410,26 @@ Tested on:
 
 ## Technical Details
 
-### Dependencies
+### Technology Stack
 
-All dependencies are loaded from CDN (no build process or npm install required):
+**Frontend Framework:**
+- **React 18**: Modern UI library with Hooks for state management
+- **TypeScript**: Type-safe development with full IDE support
+- **Tailwind CSS**: Utility-first CSS framework with dark mode support
 
-- **React 18**: Modern UI library for building component-based interfaces
-  - Loaded from CDN: `https://unpkg.com/react@18/umd/react.production.min.js`
-  - Provides efficient state management and component lifecycle
-- **React DOM 18**: React renderer for web applications
-  - Loaded from CDN: `https://unpkg.com/react-dom@18/umd/react-dom.production.min.js`
-- **Babel Standalone**: In-browser JSX transformation
-  - Loaded from CDN: `https://unpkg.com/@babel/standalone/babel.min.js`
-  - Allows writing JSX directly in the HTML file
-- **Tailwind CSS**: Utility-first CSS framework for styling
-  - Loaded from CDN: `https://cdn.tailwindcss.com`
-  - Configured with dark mode support
-- **js-yaml (4.1.0)**: YAML parsing and generation
-  - Loaded from CDN: `https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js`
-- **CryptoJS (4.2.0)**: Cryptographic library for password hashing
-  - Loaded from CDN: `https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js`
-  - Used for SHA-512 password hash generation
+**Build Tools:**
+- **Vite**: Fast build tool with Hot Module Replacement (HMR)
+- **ESLint**: Code linting with TypeScript support
+- **TypeScript Compiler**: Strict type checking enabled
+
+**Core Libraries:**
+- **js-yaml (4.1.0)**: YAML parsing and generation for autoinstall files
+- **CryptoJS (4.2.0)**: SHA-512 password hashing for secure Linux passwords
+- **Intro.js (7.2.0)**: Interactive onboarding tours (future feature)
+
+**PWA Features:**
+- **Vite PWA Plugin**: Service worker generation for offline support
+- **Workbox**: Advanced caching strategies for assets and data
 
 ### React Architecture
 
@@ -425,22 +441,102 @@ The application uses modern React patterns:
 - **Auto-Generation**: useEffect hook automatically generates YAML when config changes
 - **URL Persistence**: useEffect manages URL hash synchronization for bookmarking
 
-### File Structure
+### Project Structure
 
 ```
 .
-├── index.html              # Main application (HTML + CSS + JavaScript)
-├── i18n.js                 # Multi-language support (EN, ES, FR, DE, NL)
-├── schema-validator.js     # Schema validation module with modal
-├── diff-tool.js            # Configuration comparison module with modal
-├── storage-wizard.js       # Storage configuration wizard with 3-step UI
-├── network-wizard.js       # Network configuration wizard with 3-step UI
-├── cloud-init-exporter.js  # Cloud-init format converter with modal
-├── config-simulator.js     # System preview and analysis module with modal
-├── system-importer.js      # System configuration importer with 5-step wizard
-├── example-autoinstall.yaml # Sample configuration file
-└── README.md               # This file
+├── index.html                      # Minimal Vite entry point
+├── package.json                    # Dependencies and scripts
+├── tsconfig.json                   # TypeScript configuration
+├── vite.config.ts                  # Vite build configuration
+├── tailwind.config.js              # Tailwind CSS configuration
+├── src/
+│   ├── main.tsx                    # Application entry point
+│   ├── App.tsx                     # Main application component (768 lines)
+│   ├── index.css                   # Global styles and Tailwind imports
+│   ├── types/
+│   │   └── config.ts               # TypeScript type definitions
+│   ├── components/
+│   │   ├── forms/                  # Form input components
+│   │   │   ├── FormInput.tsx
+│   │   │   ├── FormTextarea.tsx
+│   │   │   ├── FormSelect.tsx
+│   │   │   ├── FormCheckbox.tsx
+│   │   │   ├── InfoBox.tsx
+│   │   │   └── ScreenReaderAnnouncement.tsx
+│   │   ├── tabs/                   # Configuration tab components
+│   │   │   ├── BasicTab.tsx
+│   │   │   ├── IdentityTab.tsx
+│   │   │   ├── NetworkTab.tsx
+│   │   │   ├── StorageTab.tsx
+│   │   │   ├── SoftwareTab.tsx
+│   │   │   ├── SSHTab.tsx
+│   │   │   └── AdvancedTab.tsx
+│   │   ├── modals/                 # Modal dialog components
+│   │   │   ├── PasswordHashModal.tsx
+│   │   │   └── TemplatesModal.tsx
+│   │   ├── CollapsibleSection.tsx
+│   │   ├── InlineExample.tsx
+│   │   ├── HelpTooltip.tsx
+│   │   ├── UndoRedoToolbar.tsx
+│   │   ├── VersionManagerModal.tsx
+│   │   └── KeyboardShortcutsModal.tsx
+│   ├── features/
+│   │   ├── wizards/                # Configuration wizards
+│   │   │   ├── StorageWizard.tsx
+│   │   │   ├── NetworkWizard.tsx
+│   │   │   └── SystemImporter.tsx
+│   │   ├── validation/
+│   │   │   └── SchemaValidator.tsx
+│   │   ├── diff/
+│   │   │   └── DiffTool.tsx
+│   │   ├── export/
+│   │   │   └── CloudInitExporter.tsx
+│   │   └── simulator/
+│   │       └── ConfigSimulator.tsx
+│   ├── utils/
+│   │   ├── helpers.ts              # Utility functions
+│   │   ├── storage.ts              # localStorage wrapper
+│   │   ├── keyboardShortcuts.ts    # Keyboard shortcut system
+│   │   ├── versionManager.ts       # Configuration versioning
+│   │   ├── historyManager.ts       # Undo/redo functionality
+│   │   ├── diffCalculator.ts       # YAML diff highlighting
+│   │   ├── validators.ts           # Form validation functions
+│   │   └── passwordHash.ts         # SHA-512 password hashing
+│   ├── i18n/
+│   │   ├── index.ts                # i18n class with React integration
+│   │   └── translations.ts         # Type-safe translations
+│   └── data/
+│       └── templates.ts            # Pre-configured server templates
+├── dist/                           # Production build output (gitignored)
+├── .github/
+│   └── workflows/
+│       └── deploy.yml              # GitHub Actions deployment
+├── MIGRATION.md                    # TypeScript migration status
+├── CLAUDE.md                       # Claude Code project instructions
+├── example-autoinstall.yaml        # Sample configuration file
+└── README.md                       # This file
 ```
+
+### Build System
+
+**Development:**
+- **Vite Dev Server**: Fast HMR with instant feedback at `localhost:3000`
+- **TypeScript**: Real-time type checking during development
+- **Source Maps**: Full debugging support with source-to-source mapping
+
+**Production Build:**
+- **Code Splitting**: Separate vendor chunks for React, YAML, CryptoJS, and Intro.js
+- **Tree Shaking**: Removes unused code for minimal bundle size
+- **Minification**: Optimized JavaScript and CSS with gzip compression
+- **Asset Optimization**: Images and fonts optimized for web delivery
+- **Bundle Size**: ~380 KiB total (React 142 KB, App 106 KB, CryptoJS 71 KB, js-yaml 40 KB, CSS 29 KB)
+
+**Deployment:**
+- **GitHub Actions**: Automated deployment on push to `main` branch
+- **GitHub Pages**: Static hosting with automatic SSL
+- **Base Path**: Configured for `/automaticinstall-GUI-Ubuntu/` repository path
+- **PWA Support**: Service worker for offline capability and caching
 
 ### State Persistence
 
