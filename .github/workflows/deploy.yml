@@ -1,0 +1,92 @@
+name: Deploy to GitHub Pages
+
+# Trigger this workflow on every push to the main branch
+on:
+  push:
+    branches:
+      - main
+
+# Sets permissions for the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read      # Read repository contents
+  pages: write        # Write to GitHub Pages
+  id-token: write     # Write ID tokens for authentication
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job - compiles TypeScript and builds the static site
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository code
+      # This downloads your repository to the GitHub Actions runner
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js environment
+      # Uses Node.js 20 (LTS version) for building the project
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # Cache npm dependencies for faster builds
+          cache: 'npm'
+
+      # Step 3: Install project dependencies
+      # Runs 'npm ci' which is faster and more reliable than 'npm install' in CI environments
+      # Uses package-lock.json to ensure exact versions
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Run TypeScript type checking
+      # This ensures all TypeScript code compiles without errors
+      # Fails the workflow if there are type errors
+      - name: Type check
+        run: npm run type-check
+
+      # Step 5: Build the project
+      # Compiles TypeScript and bundles the application
+      # Output goes to the 'dist' folder as configured in vite.config.ts
+      - name: Build project
+        run: npm run build
+        env:
+          # Set base path for GitHub Pages deployment
+          GITHUB_PAGES: true
+
+      # Step 6: Upload the built site as an artifact
+      # This packages the 'dist' folder for deployment
+      # The 'actions/deploy-pages' action will use this artifact
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Path to the build output directory (must match vite.config.ts outDir)
+          path: './dist'
+
+  # Deploy job - deploys the built site to GitHub Pages
+  # This job only runs if the build job succeeds
+  deploy:
+    # Set the deployment environment
+    environment:
+      name: github-pages
+      # URL where the site will be available
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # This job depends on the successful completion of the build job
+    runs-on: ubuntu-latest
+
+    # Only run deploy after build succeeds
+    needs: build
+
+    steps:
+      # Step 7: Deploy to GitHub Pages
+      # Uses the artifact uploaded in the build job
+      # Automatically publishes to GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
