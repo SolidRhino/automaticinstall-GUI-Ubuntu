@@ -21,6 +21,23 @@ code {
     monospace;
 }
 
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--ubuntu-orange);
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
 /* Focus indicators for accessibility */
 *:focus {
   outline: 3px solid var(--ubuntu-orange);
