@@ -3,7 +3,8 @@ import jsyaml from 'js-yaml';
 import { storage } from './utils/storage';
 import i18n, { type Language } from './i18n';
 import { ScreenReaderAnnouncement } from './components/forms';
-import { BasicTab, IdentityTab, NetworkTab, StorageTab, SoftwareTab, SSHTab, AdvancedTab } from './components/tabs';
+import { MetadataUserSetup, NetworkTab, StorageTab, SoftwareTab, SSHTab, AdvancedTab } from './components/tabs';
+import { CollapsibleSection } from './components/CollapsibleSection';
 import { PasswordHashModal, TemplatesModal } from './components/modals';
 import { ValidationModal } from './features/validation';
 import { DiffModal } from './features/diff';
@@ -517,236 +518,135 @@ function App() {
     announce(`Switched to ${tabs[newIndex].label} tab`);
   };
 
-  const ActiveTabComponent = tabs.find((t) => t.id === activeTab)?.component || BasicTab;
-
   return (
-    <div className={`${darkMode ? 'dark' : ''} min-h-screen`}>
-      <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-pink-600 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen p-4 md:p-6">
-        {/* Skip to main content link */}
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
+    <div className="relative flex min-h-screen w-full flex-col font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+      {/* Screen reader announcements */}
+      <ScreenReaderAnnouncement message={announcement} />
 
-        {/* Screen reader announcements */}
-        <ScreenReaderAnnouncement message={announcement} />
-
-        <div className="max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <header
-            className="bg-gradient-to-r from-ubuntu-orange to-ubuntu-purple text-white py-8 px-6 md:px-10 relative"
-            role="banner"
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-solid border-border-light dark:border-border-dark bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-sm px-4 md:px-8">
+        <div className="flex items-center gap-3 text-text-light dark:text-text-dark">
+          <div className="size-6 text-primary">
+            <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z"></path>
+              <path clipRule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fillRule="evenodd"></path>
+            </svg>
+          </div>
+          <h1 className="text-lg font-bold tracking-tight text-text-light dark:text-text-dark">{i18n.t('appTitle')}</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setDarkMode(!darkMode)} className="flex items-center justify-center rounded-lg p-2 text-text-muted-light dark:text-text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700">
+            <span className="material-symbols-outlined !text-xl">{darkMode ? 'dark_mode' : 'light_mode'}</span>
+          </button>
+          <select
+            value={language}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-700 h-10 px-3 text-sm font-medium text-text-light dark:text-text-dark"
+            aria-label="Select language"
           >
-            <div className="absolute top-4 right-4 flex gap-2">
-              <select
-                value={language}
-                onChange={(e) => handleLanguageChange(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white font-semibold cursor-pointer border-none"
-                aria-label="Select language"
-              >
-                {i18n.getAvailableLanguages().map((lang) => (
-                  <option key={lang.code} value={lang.code} className="bg-gray-800">
-                    {lang.flag} {lang.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
-                aria-label={darkMode ? i18n.t('lightMode') : i18n.t('darkMode')}
-                title={darkMode ? i18n.t('lightMode') : i18n.t('darkMode')}
-              >
-                {darkMode ? '☀️' : '🌙'}
-              </button>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center pr-32">
-              {i18n.t('appTitle')}
-            </h1>
-            <p className="text-lg md:text-xl text-center opacity-90 pr-32">
-              {i18n.t('appSubtitle')}
-            </p>
-          </header>
+            {i18n.getAvailableLanguages().map((lang) => (
+              <option key={lang.code} value={lang.code} className="bg-card-light dark:bg-card-dark">
+                {lang.flag} {lang.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </header>
 
-          {/* Template and Actions Bar */}
-          <div className="bg-gray-100 dark:bg-gray-700 p-4 flex flex-wrap gap-2 justify-center border-b border-gray-200 dark:border-gray-600">
-            <button
-              onClick={() => setShowTemplates(true)}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
-            >
-              📋 {i18n.t('loadTemplate')}
+      <main className="flex-1">
+        <div className="border-b border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark px-4 md:px-8 py-3">
+          <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center gap-2">
+            <button onClick={() => setShowTemplates(true)} className="flex items-center justify-center gap-2 rounded h-9 px-3 text-sm font-medium text-text-light dark:text-text-dark bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+              <span className="material-symbols-outlined !text-lg">description</span>
+              <span>{i18n.t('loadTemplate')}</span>
             </button>
-            <button
-              onClick={handleValidate}
-              className="px-3 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm"
-              title={i18n.t('validateConfig')}
-            >
-              ✅ {i18n.t('validateConfig')}
+            <button onClick={handleValidate} className="flex items-center justify-center gap-2 rounded h-9 px-3 text-sm font-medium text-text-light dark:text-text-dark bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+              <span className="material-symbols-outlined !text-lg">fact_check</span>
+              <span>{i18n.t('validateConfig')}</span>
             </button>
-            <button
-              onClick={() => setShowDiff(true)}
-              className="px-3 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors text-sm"
-              title={i18n.t('compareConfigs')}
-            >
-              📊 {i18n.t('compareConfigs')}
+            <button onClick={() => setShowDiff(true)} className="flex items-center justify-center gap-2 rounded h-9 px-3 text-sm font-medium text-text-light dark:text-text-dark bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+              <span className="material-symbols-outlined !text-lg">compare_arrows</span>
+              <span>{i18n.t('compareConfigs')}</span>
             </button>
-            <button
-              onClick={() => setShowConfigSimulator(true)}
-              className="px-3 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors text-sm"
-              title={i18n.t('previewSystem')}
-            >
-              🔍 {i18n.t('previewSystem')}
+            <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center gap-2 rounded h-9 px-3 text-sm font-medium text-text-light dark:text-text-dark bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+              <span className="material-symbols-outlined !text-lg">upload_file</span>
+              <span>Load YAML File</span>
             </button>
-            <button
-              onClick={() => setShowCloudInitExport(true)}
-              className="px-3 py-2 bg-cyan-600 text-white rounded-lg font-semibold hover:bg-cyan-700 transition-colors text-sm"
-              title={i18n.t('exportCloudInit')}
-            >
-              ☁️ {i18n.t('exportCloudInit')}
+            <input ref={fileInputRef} type="file" id="file-input" accept=".yaml,.yml" onChange={loadYAMLFile} className="sr-only" />
+            <button onClick={() => setShowSystemImporter(true)} className="flex items-center justify-center gap-2 rounded h-9 px-3 text-sm font-medium text-text-light dark:text-text-dark bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+              <span className="material-symbols-outlined !text-lg">system_update_alt</span>
+              <span>{i18n.t('importSystem')}</span>
             </button>
-            <button
-              onClick={() => setShowSystemImporter(true)}
-              className="px-3 py-2 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors text-sm"
-              title={i18n.t('importSystem')}
-            >
-              📥 {i18n.t('importSystem')}
+            <button onClick={() => setShowCloudInitExport(true)} className="flex items-center justify-center gap-2 rounded h-9 px-3 text-sm font-medium text-text-light dark:text-text-dark bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+              <span className="material-symbols-outlined !text-lg">cloud_upload</span>
+              <span>{i18n.t('exportCloudInit')}</span>
+            </button>
+            <button onClick={saveToURL} className="flex items-center justify-center gap-2 rounded h-9 px-3 text-sm font-medium text-text-light dark:text-text-dark bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+              <span className="material-symbols-outlined !text-lg">bookmark_add</span>
+              <span>Save to Bookmark</span>
             </button>
           </div>
-
-          {/* Main Content */}
-          <main id="main-content" role="main">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[600px]">
-              {/* Form Section */}
-              <section
-                className="p-6 md:p-8 overflow-y-auto max-h-[calc(100vh-300px)] lg:border-r border-gray-200 dark:border-gray-700"
-                aria-label="Configuration Form"
-              >
-                {/* Tabs Navigation */}
-                <nav
-                  role="tablist"
-                  aria-label="Configuration sections"
-                  className="flex flex-wrap border-b-2 border-gray-200 dark:border-gray-700 mb-6"
-                >
-                  {tabs.map((tab, index) => (
-                    <button
-                      key={tab.id}
-                      role="tab"
-                      aria-selected={activeTab === tab.id}
-                      aria-controls={`${tab.id}-panel`}
-                      id={`${tab.id}-tab`}
-                      className={`px-4 py-3 text-sm font-medium transition-colors border-b-3 focus:outline-none focus:ring-2 focus:ring-ubuntu-orange ${
-                        activeTab === tab.id
-                          ? 'text-ubuntu-orange border-b-4 border-ubuntu-orange font-semibold'
-                          : 'text-gray-600 dark:text-gray-400 hover:text-ubuntu-orange border-transparent'
-                      }`}
-                      onClick={() => {
-                        setActiveTab(tab.id);
-                        announce(`Switched to ${tab.label} tab`);
-                      }}
-                      onKeyDown={(e) => handleTabKeyDown(e, index)}
-                      tabIndex={activeTab === tab.id ? 0 : -1}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </nav>
-
-                {/* Tab Content */}
-                <ActiveTabComponent
-                  config={config as any}
-                  updateConfig={updateConfig as any}
-                  onShowPasswordHash={() => setShowPasswordHash(true)}
-                  onShowStorageWizard={() => setShowStorageWizard(true)}
-                  onShowNetworkWizard={() => setShowNetworkWizard(true)}
-                />
-              </section>
-
-              {/* Preview Section */}
-              <section
-                className="p-6 md:p-8 bg-gray-50 dark:bg-gray-900 overflow-y-auto max-h-[calc(100vh-300px)]"
-                aria-label="YAML Preview"
-              >
-                <h2 className="text-2xl font-semibold text-ubuntu-orange mb-6 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
-                  YAML Preview
-                </h2>
-                <div
-                  role="region"
-                  aria-live="polite"
-                  aria-label="Generated YAML output"
-                  className="bg-gray-900 dark:bg-black text-gray-100 p-5 rounded-lg font-mono text-sm leading-relaxed whitespace-pre-wrap break-words max-h-[500px] overflow-y-auto"
-                >
-                  {yaml}
-                </div>
-              </section>
-            </div>
-          </main>
-
-          {/* Action Buttons */}
-          <footer
-            className="p-6 bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600"
-            role="contentinfo"
-          >
-            <div className="flex flex-wrap gap-3 justify-center">
-              <button
-                onClick={generateYAML}
-                className="px-5 py-2.5 bg-ubuntu-orange text-white rounded-lg font-semibold hover:bg-ubuntu-orange/90 focus:ring-4 focus:ring-ubuntu-orange/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
-                aria-label="Generate YAML configuration"
-              >
-                Generate YAML
-              </button>
-              <button
-                onClick={downloadYAML}
-                className="px-5 py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 focus:ring-4 focus:ring-green-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
-                aria-label="Download autoinstall.yaml file"
-              >
-                Download autoinstall.yaml
-              </button>
-              <button
-                onClick={copyToClipboard}
-                className="px-5 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 focus:ring-4 focus:ring-gray-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
-                aria-label="Copy YAML to clipboard"
-              >
-                Copy to Clipboard
-              </button>
-              <label
-                htmlFor="file-input"
-                className="px-5 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 focus:ring-4 focus:ring-gray-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg cursor-pointer inline-block"
-                tabIndex={0}
-                role="button"
-                aria-label="Load YAML file from disk"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
-              >
-                Load YAML File
-              </label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                id="file-input"
-                accept=".yaml,.yml"
-                onChange={loadYAMLFile}
-                className="sr-only"
-                aria-label="Choose YAML file to load"
-              />
-              <button
-                onClick={saveToURL}
-                className="px-5 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 focus:ring-4 focus:ring-gray-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
-                aria-label="Save configuration to URL for bookmarking"
-              >
-                Save to Bookmark
-              </button>
-              <button
-                onClick={clearForm}
-                className="px-5 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 focus:ring-4 focus:ring-gray-500/50 transition-all transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
-                aria-label="Clear all form fields"
-              >
-                Clear Form
-              </button>
-            </div>
-          </footer>
         </div>
+        <div className="p-4 md:p-8">
+          <div className="mx-auto grid max-w-screen-2xl grid-cols-1 gap-8 lg:grid-cols-5">
+            <div className="flex flex-col gap-4 lg:col-span-3">
+              <div className="flex flex-col gap-3">
+                <CollapsibleSection title="Metadata & User Setup" icon="badge" defaultOpen>
+                  <MetadataUserSetup
+                    config={config}
+                    updateConfig={updateConfig}
+                    onShowPasswordHash={() => setShowPasswordHash(true)}
+                  />
+                </CollapsibleSection>
+                <CollapsibleSection title="Network" icon="dns">
+                  <NetworkTab config={config} updateConfig={updateConfig} onShowNetworkWizard={() => setShowNetworkWizard(true)} />
+                </CollapsibleSection>
+                <CollapsibleSection title="Storage" icon="save">
+                  <StorageTab config={config} updateConfig={updateConfig} onShowStorageWizard={() => setShowStorageWizard(true)} />
+                </CollapsibleSection>
+                <CollapsibleSection title="Packages" icon="widgets">
+                  <SoftwareTab config={config} updateConfig={updateConfig} />
+                </CollapsibleSection>
+                <CollapsibleSection title="Advanced Options" icon="key">
+                  <AdvancedTab config={config} updateConfig={updateConfig} />
+                  <SSHTab config={config} updateConfig={updateConfig} />
+                </CollapsibleSection>
+              </div>
+              <div className="mt-4">
+                <button onClick={clearForm} className="w-full flex items-center justify-center gap-2 rounded h-11 px-4 text-sm font-bold text-red-700 dark:text-red-500 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 dark:focus:ring-offset-background-dark">
+                  <span className="material-symbols-outlined">delete_sweep</span>
+                  <span>Clear Form</span>
+                </button>
+              </div>
+            </div>
+            <div className="lg:col-span-2 sticky top-24 h-[calc(100vh-8rem)]">
+              <div className="flex flex-col h-full rounded border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark overflow-hidden">
+                <div className="flex items-center justify-between border-b border-border-light dark:border-border-dark p-3">
+                  <h2 className="text-base font-medium text-text-light dark:text-text-dark">YAML Preview</h2>
+                  <button onClick={downloadYAML} className="flex items-center justify-center gap-2 rounded h-10 px-4 text-sm font-bold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:focus:ring-offset-card-dark">
+                    <span className="material-symbols-outlined !text-lg">download</span>
+                    <span>Download YAML file</span>
+                  </button>
+                </div>
+                <div className="flex-1 p-4 overflow-auto code-preview">
+                  <pre className="text-xs font-mono text-text-muted-light dark:text-text-muted-dark">
+                    <code>{yaml}</code>
+                  </pre>
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-border-light dark:border-border-dark p-3">
+                  <button onClick={copyToClipboard} className="flex-1 flex items-center justify-center gap-2 rounded h-10 px-4 text-sm font-medium text-text-light dark:text-text-dark bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:focus:ring-offset-card-dark">
+                    <span className="material-symbols-outlined !text-lg">content_copy</span>
+                    <span>Copy to Clipboard</span>
+                  </button>
+                  <button onClick={() => setShowConfigSimulator(true)} className="flex-1 flex items-center justify-center gap-2 rounded h-10 px-4 text-sm font-medium text-text-light dark:text-text-dark bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:focus:ring-offset-card-dark">
+                    <span className="material-symbols-outlined !text-lg">visibility</span>
+                    <span>{i18n.t('previewSystem')}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
 
         {/* Modals */}
         <PasswordHashModal
@@ -790,7 +690,6 @@ function App() {
           onClose={() => setShowSystemImporter(false)}
           onApply={handleSystemImporterApply}
         />
-      </div>
     </div>
   );
 }

@@ -8,8 +8,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        'ubuntu-orange': '#E95420',
-        'ubuntu-purple': '#772953',
+        "primary": "#FF6B35",
+        "background-light": "#F8F9FA",
+        "background-dark": "#111827",
+        "card-light": "#FFFFFF",
+        "card-dark": "#1F2937",
+        "border-light": "#E5E7EB",
+        "border-dark": "#374151",
+        "text-light": "#1F2937",
+        "text-dark": "#F3F4F6",
+        "text-muted-light": "#6B7280",
+        "text-muted-dark": "#9CA3AF"
+      },
+      fontFamily: {
+        "display": ["Inter", "sans-serif"]
+      },
+      borderRadius: {
+        "DEFAULT": "4px",
+        "lg": "8px",
+        "xl": "12px"
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in',

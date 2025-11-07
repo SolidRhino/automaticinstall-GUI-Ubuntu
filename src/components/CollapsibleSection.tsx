@@ -22,40 +22,25 @@ export function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="collapsible-section mb-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
-        aria-expanded={isOpen}
+    <details className="flex flex-col rounded border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark px-4 group" open={isOpen}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setIsOpen(!isOpen);
+        }}
+        className="flex cursor-pointer list-none items-center justify-between gap-4 py-3"
       >
         <div className="flex items-center gap-3">
-          {icon && <span className="text-xl">{icon}</span>}
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+          {icon && <span className="material-symbols-outlined text-primary">{icon}</span>}
+          <p className="text-base font-medium text-text-light dark:text-text-dark">{title}</p>
         </div>
-        <div className="flex items-center gap-2">
-          {helpText && !isOpen && (
-            <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:block">
-              {helpText}
-            </span>
-          )}
-          <svg
-            className={`w-5 h-5 transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </div>
-      </button>
-      {isOpen && (
-        <div className="p-4 fade-in">
-          {children}
-        </div>
-      )}
-    </div>
+        <span className="material-symbols-outlined text-text-light dark:text-text-muted-dark group-open:rotate-180 transition-transform">
+          expand_more
+        </span>
+      </summary>
+      <div className="border-t border-border-light dark:border-border-dark py-4">
+        {children}
+      </div>
+    </details>
   );
 }
